@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Zap, Cpu, CheckCircle, AlertTriangle, Info } from "@phosphor-icons/react";
+import { Lightning, Cpu, Check, Warning, Info } from "@phosphor-icons/react";
 
 export const HardwareAccelerationPanel: React.FC = () => {
   const accelerationMethods = [
@@ -19,7 +19,7 @@ export const HardwareAccelerationPanel: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap size={20} />
+            <Lightning size={20} />
             Hardware Acceleration
           </CardTitle>
         </CardHeader>
@@ -33,7 +33,7 @@ export const HardwareAccelerationPanel: React.FC = () => {
             <h3 className="font-medium">Current Configuration</h3>
             <div className="p-3 border rounded-lg bg-green-50">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle size={16} className="text-green-600" />
+                <Check size={16} className="text-green-600" />
                 <span className="font-medium text-sm">WebAssembly SIMD Active</span>
               </div>
               <div className="text-xs text-muted-foreground">
@@ -53,7 +53,7 @@ export const HardwareAccelerationPanel: React.FC = () => {
                       <span className="font-medium text-sm">{method.name}</span>
                       {method.status === 'active' && (
                         <Badge variant="outline" className="text-green-600">
-                          <CheckCircle size={12} className="mr-1" />
+                          <Check size={12} className="mr-1" />
                           Active
                         </Badge>
                       )}
@@ -125,7 +125,7 @@ export const HardwareAccelerationPanel: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-start gap-2 p-2 bg-yellow-50 rounded text-sm">
-                <AlertTriangle size={14} className="text-yellow-600 mt-0.5" />
+                <Warning size={14} className="text-yellow-600 mt-0.5" />
                 <div>
                   <div className="font-medium">Memory optimization</div>
                   <div className="text-xs text-muted-foreground">

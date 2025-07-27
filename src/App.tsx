@@ -20,7 +20,7 @@ import { CloudSyncPanel } from "@/components/CloudSyncPanel";
 import { DeploymentPanel } from "@/components/DeploymentPanel";
 import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
 import { LanguageSettingsPanel } from "@/components/LanguageSettingsPanel";
-import { Brain, Lightbulb, RotateCcw, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Zap, Globe } from "@phosphor-icons/react";
+import { Brain, Lightbulb, ArrowCounterClockwise, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Lightning, Globe } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 // Multi-language example texts
@@ -258,7 +258,7 @@ function App() {
                   Language
                 </TabsTrigger>
                 <TabsTrigger value="acceleration" className="flex items-center gap-2">
-                  <Zap size={14} />
+                  <Lightning size={14} />
                   {t('tabs.hardware')}
                 </TabsTrigger>
                 <TabsTrigger value="ml-models" className="flex items-center gap-2">
@@ -299,7 +299,7 @@ function App() {
                           onClick={clearText}
                           className="text-xs"
                         >
-                          <RotateCcw size={14} />
+                          <ArrowCounterClockwise size={14} />
                         </Button>
                         {isElectron && (
                           <>

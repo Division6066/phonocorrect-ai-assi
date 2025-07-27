@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendUp, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { TrendUp, Check, X } from "@phosphor-icons/react";
 
 interface LearningStatsProps {
   preferences: {
@@ -34,7 +34,7 @@ export const LearningStats: React.FC<LearningStatsProps> = ({ preferences }) => 
         
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <CheckCircle size={14} className="text-green-600" />
+            <Check size={14} className="text-green-600" />
             <div>
               <div className="font-medium">{preferences.acceptedSuggestions}</div>
               <div className="text-muted-foreground text-xs">Accepted</div>

@@ -2,13 +2,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Download, Package, Globe, Smartphone, MonitorPlay } from "@phosphor-icons/react";
+import { Rocket, Download, Package, Globe, DeviceMobile, Monitor } from "@phosphor-icons/react";
 
 export const DeploymentPanel: React.FC = () => {
   const platforms = [
     { name: 'Web App', icon: Globe, status: 'ready', url: 'https://phonocorrect.ai' },
-    { name: 'Desktop App', icon: MonitorPlay, status: 'building', progress: 75 },
-    { name: 'Mobile App', icon: Smartphone, status: 'pending', version: 'v1.0.0-beta' },
+    { name: 'Desktop App', icon: Monitor, status: 'building', progress: 75 },
+    { name: 'Mobile App', icon: DeviceMobile, status: 'pending', version: 'v1.0.0-beta' },
     { name: 'Chrome Extension', icon: Package, status: 'ready', size: '2.1MB' }
   ];
 

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Cpu, Download, CheckCircle, AlertCircle } from "@phosphor-icons/react";
+import { Cpu, Download, Check, Warning } from "@phosphor-icons/react";
 
 export const MLModelsPanel: React.FC = () => {
   const models = [
@@ -36,7 +36,7 @@ export const MLModelsPanel: React.FC = () => {
                     <span className="text-xs text-muted-foreground">({model.size})</span>
                     {model.status === 'ready' && (
                       <Badge variant="outline" className="text-green-600">
-                        <CheckCircle size={12} className="mr-1" />
+                        <Check size={12} className="mr-1" />
                         Ready
                       </Badge>
                     )}
@@ -76,7 +76,7 @@ export const MLModelsPanel: React.FC = () => {
           
           <div className="pt-4 border-t">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <AlertCircle size={14} />
+              <Warning size={14} />
               <span>Total storage: 1.4GB of 4GB used</span>
             </div>
             <Progress value={35} className="h-2" />

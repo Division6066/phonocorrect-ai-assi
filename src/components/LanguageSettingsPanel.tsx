@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Globe, CheckCircle } from "@phosphor-icons/react";
+import { Globe, Check } from "@phosphor-icons/react";
 
 export const LanguageSettingsPanel: React.FC = () => {
   const { currentLanguage, setLanguage } = useLanguage();
@@ -54,7 +54,7 @@ export const LanguageSettingsPanel: React.FC = () => {
                     </div>
                   </div>
                   {currentLanguage === language.code && (
-                    <CheckCircle size={16} className="text-primary" />
+                    <Check size={16} className="text-primary" />
                   )}
                 </button>
               ))}
@@ -66,7 +66,7 @@ export const LanguageSettingsPanel: React.FC = () => {
             <h3 className="font-medium">Phonetic Correction</h3>
             <div className="p-3 border rounded-lg bg-muted/50">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle size={16} className="text-green-600" />
+                <Check size={16} className="text-green-600" />
                 <span className="font-medium text-sm">
                   {languages.find(l => l.code === currentLanguage)?.name} Corrections Active
                 </span>

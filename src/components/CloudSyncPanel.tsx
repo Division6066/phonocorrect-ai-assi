@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Cloud, CreditCard, Sync, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { Cloud, CreditCard, ArrowsClockwise, Check, X } from "@phosphor-icons/react";
 
 export const CloudSyncPanel: React.FC = () => {
   return (
@@ -33,21 +33,21 @@ export const CloudSyncPanel: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <XCircle size={16} className="text-red-500" />
+                  <X size={16} className="text-red-500" />
                   <span className="text-sm">Multi-device sync</span>
                 </div>
                 <span className="text-xs text-muted-foreground">Requires Premium</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <XCircle size={16} className="text-red-500" />
+                  <X size={16} className="text-red-500" />
                   <span className="text-sm">Cloud inference fallback</span>
                 </div>
                 <span className="text-xs text-muted-foreground">Requires Premium</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <XCircle size={16} className="text-red-500" />
+                  <X size={16} className="text-red-500" />
                   <span className="text-sm">Advanced analytics</span>
                 </div>
                 <span className="text-xs text-muted-foreground">Requires Premium</span>
@@ -60,7 +60,7 @@ export const CloudSyncPanel: React.FC = () => {
             <h3 className="font-medium">Sync Status</h3>
             <div className="p-3 border rounded-lg bg-muted/50">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Sync size={14} />
+                <ArrowsClockwise size={14} />
                 <span>Local storage only (no sync)</span>
               </div>
             </div>
