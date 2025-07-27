@@ -27,7 +27,12 @@
         "mobile:android": "pnpm --filter mobile android",
         "mobile:ios": "pnpm --filter mobile ios",
         "mobile:build:android": "pnpm --filter mobile build:android",
-        "mobile:build:ios": "pnpm --filter mobile build:ios"
+        "mobile:build:ios": "pnpm --filter mobile build:ios",
+        "release:all": "pnpm build && pnpm electron-dist",
+        "release:desktop": "pnpm --filter desktop dist",
+        "release:android": "cd mobile && eas build --platform android --profile preview",
+        "release:ios": "cd mobile && eas build --platform ios --profile preview",
+        "package:chrome": "cd chrome-ext && pnpm build && cd dist && zip -r ../phonocorrect-chrome-extension.zip ."
     },
     "dependencies": {},
     "devDependencies": {

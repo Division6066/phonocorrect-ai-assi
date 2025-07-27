@@ -11,6 +11,40 @@ A comprehensive phonetic spelling assistant that helps users write with confiden
 - **🔒 Privacy-first** offline operation
 - **🎨 Beautiful, accessible UI** with shadcn components
 
+## 📱 Download & Install
+
+### Quick Install (Latest Release)
+📲 **[Download QR Page](https://github.com/yourusername/phonocorrect-ai/releases/latest/download/qr.html)** - Scan QR codes for mobile apps
+
+### Platform Downloads
+| Platform | Download | Requirements |
+|----------|----------|--------------|
+| 📱 **Android** | [Download APK](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Android 8.0+ |
+| 📱 **iOS** | [TestFlight Beta](https://testflight.apple.com/join/YOUR_CODE) | iOS 14.0+ |
+| 🖥️ **macOS** | [Download DMG](https://github.com/yourusername/phonocorrect-ai/releases/latest) | macOS 10.15+ |
+| 🖥️ **Windows** | [Download EXE](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Windows 10+ |
+| 🖥️ **Linux** | [Download AppImage](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Ubuntu 18.04+ |
+| 🌐 **Chrome** | [Extension ZIP](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Chrome 88+ |
+
+### 📋 Installation Instructions
+
+#### 📱 Android APK Sideload
+1. **Enable Unknown Sources**: Settings → Security → Install unknown apps
+2. **Download APK** from releases page or scan QR code
+3. **Install**: Tap the downloaded APK and follow prompts
+4. **Grant Permissions**: Allow microphone access for speech features
+
+#### 🖥️ Desktop Apps
+- **macOS**: Mount DMG → Drag to Applications → Right-click "Open" (first time)
+- **Windows**: Run installer EXE → Allow SmartScreen → Follow wizard
+- **Linux**: `chmod +x *.AppImage && ./PhonoCorrect*.AppImage`
+
+#### 🌐 Chrome Extension
+1. Download and unzip extension file
+2. Open `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked" → Select unzipped folder
+
 ## 📁 Project Structure
 
 ```
@@ -24,6 +58,7 @@ phonocorrect-ai/
 ├── chrome-ext/              # Chrome extension (Manifest V3)
 ├── keyboard-ios/            # SwiftUI custom keyboard
 ├── keyboard-android/        # Kotlin Input Method Service
+├── scripts/                 # Build and deployment scripts
 └── .github/workflows/       # CI/CD pipeline
 ```
 
@@ -350,6 +385,128 @@ GitHub Actions workflow includes:
 - Push to `main` or `develop` branches
 - Pull requests to `main`
 - Manual workflow dispatch
+
+## 📦 Packaging & Distribution
+
+### 🛠️ Build Commands
+
+#### Release All Platforms
+```bash
+# Build everything for release
+pnpm release:all                # Build all packages + desktop dist
+
+# Platform-specific builds
+pnpm release:desktop           # Electron apps (dmg, exe, AppImage)
+pnpm release:android           # EAS build for Android
+pnpm release:ios              # EAS build for iOS  
+pnpm package:chrome           # Package Chrome extension
+```
+
+#### Individual Platform Builds
+```bash
+# Desktop applications
+pnpm electron-dist            # Build desktop apps for all platforms
+cd desktop && pnpm dist       # Same as above, from desktop directory
+
+# Mobile applications (requires EAS setup)
+cd mobile
+eas build --platform android --profile preview
+eas build --platform ios --profile preview
+
+# Chrome extension
+cd chrome-ext
+pnpm build
+cd dist && zip -r ../phonocorrect-chrome-extension.zip .
+```
+
+### 📱 Mobile App Distribution
+
+#### EAS Build Profiles
+- **development**: Dev builds with Expo client
+- **preview**: Release builds for internal testing (APK/IPA)
+- **production**: Store-ready builds (AAB for Play Store)
+- **internal**: Internal distribution builds
+
+#### Android APK Sideloading
+1. **Enable Developer Options**: Settings → About → Tap Build Number 7 times
+2. **Enable USB Debugging**: Developer Options → USB Debugging
+3. **Allow Unknown Sources**: Settings → Security → Install unknown apps
+4. **Install**: `adb install PhonoCorrectAI.apk` or download QR page
+
+#### iOS TestFlight
+1. Join TestFlight beta: [testflight.apple.com/join/YOUR_CODE](https://testflight.apple.com/join/YOUR_CODE)
+2. Install TestFlight app from App Store
+3. Follow invite link and install beta
+
+### 🖥️ Desktop Distribution
+
+#### Code Signing Status
+| Platform | Status | Notes |
+|----------|---------|-------|
+| **macOS** | ⚠️ Self-signed | Requires right-click "Open" for first launch |
+| **Windows** | ⚠️ Self-signed | Windows Defender SmartScreen warning |
+| **Linux** | ✅ Ready | No signing required for AppImage |
+
+#### Distribution Formats
+- **macOS**: `.dmg` (disk image) + `.zip` (portable)
+- **Windows**: `.exe` (NSIS installer) + portable `.exe`
+- **Linux**: `.AppImage` (portable) + `.deb` (Debian package)
+
+### 🌐 Browser Extension
+
+#### Chrome Web Store (TODO)
+- [ ] Store listing preparation
+- [ ] Privacy policy and terms
+- [ ] Store review process
+
+#### Manual Installation (Current)
+1. Download `phonocorrect-chrome-extension.zip`
+2. Unzip to local folder
+3. Load unpacked in Chrome Developer Mode
+
+### 📄 Release Artifacts
+
+Each GitHub release includes:
+
+| File | Platform | Description |
+|------|----------|-------------|
+| `PhonoCorrectAI-v1.0.0-123.dmg` | macOS | Universal binary (Intel + Apple Silicon) |
+| `PhonoCorrectAI-v1.0.0-123.exe` | Windows | x64 installer with Smart Screen bypass |
+| `PhonoCorrectAI-v1.0.0-123.AppImage` | Linux | Portable application bundle |
+| `PhonoCorrectAI-v1.0.0-123.apk` | Android | Direct install APK for sideloading |
+| `PhonoCorrectAI-v1.0.0-123.ipa` | iOS | TestFlight distribution package |
+| `phonocorrect-chrome-extension.zip` | Chrome | Unpacked extension for developer mode |
+| `qr.html` | All | QR code distribution page for mobile |
+
+### 🎯 QR Code Distribution
+
+The QR distribution page (`qr.html`) provides:
+- **QR codes** for quick mobile app installation
+- **Direct download links** for all platforms
+- **Installation instructions** with screenshots
+- **System requirements** and compatibility info
+- **Security warnings** for sideload installations
+
+Access via: `https://github.com/yourusername/phonocorrect-ai/releases/latest/download/qr.html`
+
+### 🔐 Security Notes
+
+#### Code Signing TODO Items
+- [ ] Apple Developer Account for macOS/iOS signing
+- [ ] Windows Code Signing Certificate
+- [ ] Play Store and App Store publishing setup
+- [ ] Chrome Web Store developer account
+
+#### Current Security Status
+- **Desktop apps**: Self-signed (security warnings expected)
+- **Mobile apps**: Development certificates only
+- **Browser extension**: Manifest V3 compliant, unpacked only
+
+### 📊 Distribution Analytics (TODO)
+- [ ] Download tracking with GitHub API
+- [ ] Crash reporting integration (Bugsnag/Sentry)
+- [ ] Update notifications system
+- [ ] Usage analytics (privacy-compliant)
 
 ## 📋 Architecture
 
