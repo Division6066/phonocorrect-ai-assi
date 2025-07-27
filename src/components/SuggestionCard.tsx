@@ -1,83 +1,51 @@
-import { Card, CardContent } from "@/components/ui/card";
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Check, X, Info } from "@phosphor-icons/react";
-import { Suggestion } from "@/lib/phoneticEngine";
+import { Check, X } from "@phosphor-icons/react";
 
 interface SuggestionCardProps {
-  suggestion: Suggestion;
+  suggestion: {
+    original: string;
+    suggestion: string;
+    confidence: number;
+    explanation?: string;
+  };
   onAccept: () => void;
   onReject: () => void;
   getConfidenceColor: (confidence: number) => string;
   getConfidenceLabel: (confidence: number) => string;
 }
 
-export function SuggestionCard({ 
-  suggestion, 
-  onAccept, 
-  onReject, 
+export const SuggestionCard: React.FC<SuggestionCardProps> = ({
+  suggestion,
+  onAccept,
+  onReject,
   getConfidenceColor,
-  getConfidenceLabel 
-}: SuggestionCardProps) {
-  const confidencePercentage = Math.round(suggestion.confidence * 100);
-
+  getConfidenceLabel
+}) => {
   return (
-    <Card className="mb-3 transition-all duration-200 hover:shadow-md">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm text-muted-foreground line-through">
-                {suggestion.original}
-              </span>
-              <span className="text-sm text-muted-foreground">→</span>
-              <span className="font-medium text-primary">
-                {suggestion.suggestion}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className={getConfidenceColor(suggestion.confidence)}>
-                {confidencePercentage}% confident
-              </Badge>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info size={14} className="text-muted-foreground cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs">{suggestion.pattern}</p>
-                    <p className="text-xs">{getConfidenceLabel(suggestion.confidence)}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            
-            <p className="text-xs text-muted-foreground">
-              {suggestion.pattern}
-            </p>
-          </div>
-          
-          <div className="flex gap-2 ml-4">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onReject}
-              className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
-            >
-              <X size={14} />
-            </Button>
-            <Button
-              size="sm"
-              onClick={onAccept}
-              className="h-8 w-8 p-0 bg-accent hover:bg-accent/90"
-            >
-              <Check size={14} />
-            </Button>
-          </div>
+    <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-red-600 line-through text-sm">{suggestion.original}</span>
+          <span>→</span>
+          <span className="text-green-600 font-medium text-sm">{suggestion.suggestion}</span>
+          <Badge variant="outline" className={getConfidenceColor(suggestion.confidence)}>
+            {getConfidenceLabel(suggestion.confidence)} ({Math.round(suggestion.confidence * 100)}%)
+          </Badge>
         </div>
-      </CardContent>
-    </Card>
+        {suggestion.explanation && (
+          <p className="text-xs text-muted-foreground">{suggestion.explanation}</p>
+        )}
+      </div>
+      <div className="flex gap-2 ml-4">
+        <Button size="sm" variant="outline" onClick={onAccept}>
+          <Check size={14} />
+        </Button>
+        <Button size="sm" variant="outline" onClick={onReject}>
+          <X size={14} />
+        </Button>
+      </div>
+    </div>
   );
-}
+};

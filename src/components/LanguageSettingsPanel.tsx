@@ -1,148 +1,150 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Globe, Settings, Check } from "@phosphor-icons/react";
+import { Globe, CheckCircle } from "@phosphor-icons/react";
 
-export function LanguageSettingsPanel() {
-  const { currentLanguage, setLanguage, availableLanguages, t } = useLanguage();
+export const LanguageSettingsPanel: React.FC = () => {
+  const { currentLanguage, setLanguage } = useLanguage();
 
-  const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage as any);
-  };
+  const languages = [
+    { code: 'en', name: 'English', native: 'English', flag: '🇺🇸' },
+    { code: 'es', name: 'Spanish', native: 'Español', flag: '🇪🇸' },
+    { code: 'fr', name: 'French', native: 'Français', flag: '🇫🇷' },
+    { code: 'de', name: 'German', native: 'Deutsch', flag: '🇩🇪' },
+    { code: 'he', name: 'Hebrew', native: 'עברית', flag: '🇮🇱' },
+    { code: 'ar', name: 'Arabic', native: 'العربية', flag: '🇸🇦' },
+    { code: 'zh', name: 'Chinese', native: '中文', flag: '🇨🇳' }
+  ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe size={20} />
-          {t('settings.title')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Language Selection */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium">{t('settings.language')}</h4>
-          <Select value={currentLanguage} onValueChange={handleLanguageChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableLanguages.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{lang.flag}</span>
-                    <span>{lang.nativeName}</span>
-                    <span className="text-muted-foreground">({lang.name})</span>
-                    {lang.code === currentLanguage && (
-                      <Check size={14} className="text-primary" />
-                    )}\n                  </div>
-                </SelectItem>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe size={20} />
+            Language Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Select your preferred language for the interface and phonetic correction
+          </p>
+
+          {/* Language Selection */}
+          <div className="space-y-3">
+            <h3 className="font-medium">Interface Language</h3>
+            <div className="grid gap-2">
+              {languages.map((language) => (
+                <button
+                  key={language.code}
+                  onClick={() => setLanguage(language.code as any)}
+                  className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                    currentLanguage === language.code
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:bg-muted/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{language.flag}</span>
+                    <div className="text-left">
+                      <div className="font-medium text-sm">{language.name}</div>
+                      <div className="text-xs text-muted-foreground">{language.native}</div>
+                    </div>
+                  </div>
+                  {currentLanguage === language.code && (
+                    <CheckCircle size={16} className="text-primary" />
+                  )}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Separator />
-
-        {/* Language Features */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium">Language Features</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Speech Recognition</span>
-                <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
-                  Available
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Text-to-Speech</span>
-                <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
-                  Available
-                </Badge>
-              </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Phonetic Correction</span>
-                <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
-                  Available
-                </Badge>
+          </div>
+
+          {/* Phonetic Correction Language */}
+          <div className="space-y-3">
+            <h3 className="font-medium">Phonetic Correction</h3>
+            <div className="p-3 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle size={16} className="text-green-600" />
+                <span className="font-medium text-sm">
+                  {languages.find(l => l.code === currentLanguage)?.name} Corrections Active
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">ML Models</span>
-                <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">
-                  {currentLanguage === 'en' ? 'Full' : 'Basic'}
-                </Badge>
+              <div className="text-xs text-muted-foreground">
+                AI model will provide phonetic corrections in {languages.find(l => l.code === currentLanguage)?.name}
               </div>
             </div>
           </div>
-        </div>
 
-        <Separator />
-
-        {/* Quick Language Examples */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium">Common Patterns</h4>
-          <div className="bg-muted rounded-lg p-3 text-sm">
-            <div className="space-y-1">
-              {currentLanguage === 'en' && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">fone</span>
-                    <span>→ phone</span>
+          {/* Language Support Status */}
+          <div className="space-y-3">
+            <h3 className="font-medium">Feature Support by Language</h3>
+            <div className="space-y-2">
+              {languages.map((language) => (
+                <div key={language.code} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <span>{language.flag}</span>
+                    <span>{language.name}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">seperate</span>
-                    <span>→ separate</span>
+                  <div className="flex gap-1">
+                    <Badge variant="outline" className="text-green-600 text-xs">
+                      Phonetic
+                    </Badge>
+                    {['en', 'es', 'fr', 'de'].includes(language.code) && (
+                      <Badge variant="outline" className="text-blue-600 text-xs">
+                        TTS
+                      </Badge>
+                    )}
+                    {['en', 'es', 'fr'].includes(language.code) && (
+                      <Badge variant="outline" className="text-purple-600 text-xs">
+                        STT
+                      </Badge>
+                    )}
                   </div>
-                </>
-              )}
-              {currentLanguage === 'es' && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">téléfono</span>
-                    <span>→ teléfono</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">resivir</span>
-                    <span>→ recibir</span>
-                  </div>
-                </>
-              )}
-              {currentLanguage === 'fr' && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">téléfone</span>
-                    <span>→ téléphone</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">resevoir</span>
-                    <span>→ recevoir</span>
-                  </div>
-                </>
-              )}
-              {/* Add patterns for other languages */}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1">
-            <Settings size={14} className="mr-1" />
-            {t('settings.voice_settings')}
-          </Button>
-          <Button size="sm" variant="outline" className="flex-1">
-            <Settings size={14} className="mr-1" />
-            {t('settings.ml_settings')}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Advanced Settings */}
+          <div className="space-y-3">
+            <h3 className="font-medium">Advanced Settings</h3>
+            <div className="space-y-2">
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                Download Offline Models
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                Configure Regional Variants
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                Reset Language Preferences
+              </Button>
+            </div>
+          </div>
+
+          {/* Usage Statistics */}
+          <div className="space-y-3">
+            <h3 className="font-medium">Usage Statistics</h3>
+            <div className="p-3 border rounded-lg text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="font-medium">Corrections made:</span> 247
+                </div>
+                <div>
+                  <span className="font-medium">Accuracy:</span> 94%
+                </div>
+                <div>
+                  <span className="font-medium">Words processed:</span> 12,483
+                </div>
+                <div>
+                  <span className="font-medium">Time saved:</span> ~2.5h
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};

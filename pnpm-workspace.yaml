@@ -1,8 +1,0 @@
-packages:
-  - "packages/*"
-  - "mobile"
-  - "desktop"
-  - "web"
-  - "chrome-ext"
-  - "keyboard-ios"
-  - "keyboard-android"
