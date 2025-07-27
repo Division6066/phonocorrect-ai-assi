@@ -19,10 +19,13 @@ import {
   Monitor,
   Chrome,
   Apple,
-  ChartLine
+  ChartLine,
+  Bell,
+  Activity
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { TestReportingDashboard } from "./TestReportingDashboard";
+import { PerformanceRegressionAlerts } from "./PerformanceRegressionAlerts";
 
 interface TestResult {
   name: string;
@@ -537,6 +540,19 @@ export function TestingDashboard() {
         </CardHeader>
         <CardContent>
           <TestReportingDashboard />
+        </CardContent>
+      </Card>
+
+      {/* Performance Regression Alerts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell size={16} />
+            Performance Regression Monitoring
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PerformanceRegressionAlerts />
         </CardContent>
       </Card>
     </div>

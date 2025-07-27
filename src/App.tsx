@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle, GitBranch, Play, Calendar, Scales, TestTube } from "@phosphor-icons/react";
+import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle, GitBranch, Play, Calendar, Scales, TestTube, Bell } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { DebugOverlay } from "@/components/DebugOverlay";
 import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
@@ -13,6 +13,7 @@ import { MLModelsPanel } from "@/components/MLModelsPanel";
 import { ModelQuantizationPanel } from "@/components/ModelQuantizationPanel";
 import { QuantizationComparison } from "@/components/QuantizationComparison";
 import { TestingDashboard } from "@/components/TestingDashboard";
+import { AutomatedRegressionAlerts } from "@/components/AutomatedRegressionAlerts";
 import { usePerformanceOptimization } from "@/hooks/use-performance-optimization";
 
 // Simple mock interfaces
@@ -353,7 +354,22 @@ function App() {
               </TabsContent>
 
               <TabsContent value="testing" className="mt-6">
-                <TestingDashboard />
+                <div className="space-y-6">
+                  <TestingDashboard />
+                  
+                  {/* Automated Performance Regression Alerts */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Bell size={16} />
+                        Automated Regression Alerts
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <AutomatedRegressionAlerts />
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="hardware" className="mt-6">

@@ -1,0 +1,244 @@
+name: 'Performance Regression Monitoring'
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run performance checks every 6 hours
+    - cron: '0 */6 * * *'
+
+jobs:
+  performance-monitoring:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run performance benchmarks
+        run: |
+          npm run test:performance
+          npm run benchmark:inference
+          npm run benchmark:memory
+          
+      - name: Collect performance metrics
+        id: metrics
+        run: |
+          # Extract metrics from benchmark output
+          INFERENCE_TIME=$(cat benchmark-results.json | jq -r '.inferenceTime')
+          MEMORY_USAGE=$(cat benchmark-results.json | jq -r '.memoryUsage')
+          MODEL_ACCURACY=$(cat benchmark-results.json | jq -r '.modelAccuracy')
+          
+          echo "inference_time=$INFERENCE_TIME" >> $GITHUB_OUTPUT
+          echo "memory_usage=$MEMORY_USAGE" >> $GITHUB_OUTPUT
+          echo "model_accuracy=$MODEL_ACCURACY" >> $GITHUB_OUTPUT
+          
+      - name: Load performance baselines
+        id: baselines
+        run: |
+          # Load baseline metrics from repository
+          BASELINE_INFERENCE=$(cat .github/performance-baselines.json | jq -r '.inferenceTime')
+          BASELINE_MEMORY=$(cat .github/performance-baselines.json | jq -r '.memoryUsage')
+          BASELINE_ACCURACY=$(cat .github/performance-baselines.json | jq -r '.modelAccuracy')
+          
+          echo "baseline_inference=$BASELINE_INFERENCE" >> $GITHUB_OUTPUT
+          echo "baseline_memory=$BASELINE_MEMORY" >> $GITHUB_OUTPUT
+          echo "baseline_accuracy=$BASELINE_ACCURACY" >> $GITHUB_OUTPUT
+          
+      - name: Calculate performance regression
+        id: regression
+        run: |
+          # Calculate regression percentages
+          INFERENCE_REGRESSION=$(python3 -c "
+          current = ${{ steps.metrics.outputs.inference_time }}
+          baseline = ${{ steps.baselines.outputs.baseline_inference }}
+          regression = abs((current - baseline) / baseline) * 100
+          print(f'{regression:.1f}')
+          ")
+          
+          MEMORY_REGRESSION=$(python3 -c "
+          current = ${{ steps.metrics.outputs.memory_usage }}
+          baseline = ${{ steps.baselines.outputs.baseline_memory }}
+          regression = abs((current - baseline) / baseline) * 100
+          print(f'{regression:.1f}')
+          ")
+          
+          ACCURACY_REGRESSION=$(python3 -c "
+          current = ${{ steps.metrics.outputs.model_accuracy }}
+          baseline = ${{ steps.baselines.outputs.baseline_accuracy }}
+          regression = abs((current - baseline) / baseline) * 100
+          print(f'{regression:.1f}')
+          ")
+          
+          echo "inference_regression=$INFERENCE_REGRESSION" >> $GITHUB_OUTPUT
+          echo "memory_regression=$MEMORY_REGRESSION" >> $GITHUB_OUTPUT
+          echo "accuracy_regression=$ACCURACY_REGRESSION" >> $GITHUB_OUTPUT
+          
+      - name: Check regression thresholds
+        id: threshold_check
+        run: |
+          WARNING_THRESHOLD=15
+          CRITICAL_THRESHOLD=30
+          
+          CRITICAL_ALERTS=""
+          WARNING_ALERTS=""
+          
+          # Check inference time regression
+          if (( $(echo "${{ steps.regression.outputs.inference_regression }} >= $CRITICAL_THRESHOLD" | bc -l) )); then
+            CRITICAL_ALERTS="$CRITICAL_ALERTS inference_time"
+          elif (( $(echo "${{ steps.regression.outputs.inference_regression }} >= $WARNING_THRESHOLD" | bc -l) )); then
+            WARNING_ALERTS="$WARNING_ALERTS inference_time"
+          fi
+          
+          # Check memory usage regression
+          if (( $(echo "${{ steps.regression.outputs.memory_regression }} >= $CRITICAL_THRESHOLD" | bc -l) )); then
+            CRITICAL_ALERTS="$CRITICAL_ALERTS memory_usage"
+          elif (( $(echo "${{ steps.regression.outputs.memory_regression }} >= $WARNING_THRESHOLD" | bc -l) )); then
+            WARNING_ALERTS="$WARNING_ALERTS memory_usage"
+          fi
+          
+          # Check model accuracy regression
+          if (( $(echo "${{ steps.regression.outputs.accuracy_regression }} >= $CRITICAL_THRESHOLD" | bc -l) )); then
+            CRITICAL_ALERTS="$CRITICAL_ALERTS model_accuracy"
+          elif (( $(echo "${{ steps.regression.outputs.accuracy_regression }} >= $WARNING_THRESHOLD" | bc -l) )); then
+            WARNING_ALERTS="$WARNING_ALERTS model_accuracy"
+          fi
+          
+          echo "critical_alerts=$CRITICAL_ALERTS" >> $GITHUB_OUTPUT
+          echo "warning_alerts=$WARNING_ALERTS" >> $GITHUB_OUTPUT
+          
+      - name: Create performance report
+        run: |
+          cat > performance-report.md << EOF
+          # Performance Report
+          
+          **Generated:** $(date)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Current Metrics
+          - **Inference Time:** ${{ steps.metrics.outputs.inference_time }}ms
+          - **Memory Usage:** ${{ steps.metrics.outputs.memory_usage }}MB
+          - **Model Accuracy:** ${{ steps.metrics.outputs.model_accuracy }}%
+          
+          ## Baseline Comparison
+          - **Inference Time:** ${{ steps.regression.outputs.inference_regression }}% regression
+          - **Memory Usage:** ${{ steps.regression.outputs.memory_regression }}% regression
+          - **Model Accuracy:** ${{ steps.regression.outputs.accuracy_regression }}% regression
+          
+          ## Alert Summary
+          - **Critical Alerts:** ${{ steps.threshold_check.outputs.critical_alerts }}
+          - **Warning Alerts:** ${{ steps.threshold_check.outputs.warning_alerts }}
+          EOF
+          
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: performance-report.md
+          
+      - name: Send Slack notification for critical alerts
+        if: steps.threshold_check.outputs.critical_alerts != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#performance-alerts'
+          text: |
+            🚨 **Critical Performance Regression Detected**
+            
+            **Repository:** ${{ github.repository }}
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            
+            **Critical Issues:**
+            ${{ steps.threshold_check.outputs.critical_alerts }}
+            
+            **Metrics:**
+            - Inference: ${{ steps.metrics.outputs.inference_time }}ms (${{ steps.regression.outputs.inference_regression }}% regression)
+            - Memory: ${{ steps.metrics.outputs.memory_usage }}MB (${{ steps.regression.outputs.memory_regression }}% regression)
+            - Accuracy: ${{ steps.metrics.outputs.model_accuracy }}% (${{ steps.regression.outputs.accuracy_regression }}% regression)
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+      - name: Send email notification for critical alerts
+        if: steps.threshold_check.outputs.critical_alerts != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: 🚨 Critical Performance Regression - PhonoCorrect AI
+          to: ${{ secrets.ALERT_EMAIL }}
+          from: PhonoCorrect AI Performance Monitor
+          body: |
+            A critical performance regression has been detected in PhonoCorrect AI.
+            
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            
+            Critical Metrics:
+            ${{ steps.threshold_check.outputs.critical_alerts }}
+            
+            Current Performance:
+            - Inference Time: ${{ steps.metrics.outputs.inference_time }}ms (${{ steps.regression.outputs.inference_regression }}% regression)
+            - Memory Usage: ${{ steps.metrics.outputs.memory_usage }}MB (${{ steps.regression.outputs.memory_regression }}% regression)
+            - Model Accuracy: ${{ steps.metrics.outputs.model_accuracy }}% (${{ steps.regression.outputs.accuracy_regression }}% regression)
+            
+            Please investigate and address these performance issues immediately.
+            
+      - name: Comment on PR with performance results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const criticalAlerts = '${{ steps.threshold_check.outputs.critical_alerts }}';
+            const warningAlerts = '${{ steps.threshold_check.outputs.warning_alerts }}';
+            
+            let status = '✅ Performance looks good!';
+            let color = '28a745';
+            
+            if (criticalAlerts) {
+              status = '🚨 Critical performance regression detected!';
+              color = 'dc3545';
+            } else if (warningAlerts) {
+              status = '⚠️ Performance warning detected';
+              color = 'ffc107';
+            }
+            
+            const body = `
+            ## ${status}
+            
+            | Metric | Current | Baseline | Regression |
+            |--------|---------|----------|------------|
+            | Inference Time | ${{ steps.metrics.outputs.inference_time }}ms | ${{ steps.baselines.outputs.baseline_inference }}ms | ${{ steps.regression.outputs.inference_regression }}% |
+            | Memory Usage | ${{ steps.metrics.outputs.memory_usage }}MB | ${{ steps.baselines.outputs.baseline_memory }}MB | ${{ steps.regression.outputs.memory_regression }}% |
+            | Model Accuracy | ${{ steps.metrics.outputs.model_accuracy }}% | ${{ steps.baselines.outputs.baseline_accuracy }}% | ${{ steps.regression.outputs.accuracy_regression }}% |
+            
+            ${criticalAlerts ? `**Critical Issues:** ${criticalAlerts}` : ''}
+            ${warningAlerts ? `**Warnings:** ${warningAlerts}` : ''}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+            
+      - name: Fail workflow on critical regression
+        if: steps.threshold_check.outputs.critical_alerts != ''
+        run: |
+          echo "::error::Critical performance regression detected: ${{ steps.threshold_check.outputs.critical_alerts }}"
+          exit 1
