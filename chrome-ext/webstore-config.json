@@ -1,0 +1,20 @@
+{
+  "name": "chrome-webstore-upload",
+  "version": "1.0.0",
+  "description": "Chrome Web Store upload configuration for PhonoCorrect AI",
+  "scripts": {
+    "upload": "chrome-webstore-upload-cli upload",
+    "upload-beta": "chrome-webstore-upload-cli upload --auto-publish false",
+    "upload-production": "chrome-webstore-upload-cli upload --auto-publish true"
+  },
+  "devDependencies": {
+    "chrome-webstore-upload-cli": "^3.0.0"
+  },
+  "chrome-webstore-upload": {
+    "extensionId": "$CHROME_EXTENSION_ID",
+    "clientId": "$CHROME_CLIENT_ID", 
+    "clientSecret": "$CHROME_CLIENT_SECRET",
+    "refreshToken": "$CHROME_REFRESH_TOKEN",
+    "zipPath": "dist/phonocorrect-chrome-extension.zip"
+  }
+}

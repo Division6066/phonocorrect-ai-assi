@@ -1,0 +1,514 @@
+name: 🚀 Publish Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - beta
+          - production
+      platforms:
+        description: 'Platforms to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - mobile
+          - desktop
+          - web
+          - chrome
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '9.0.0'
+
+jobs:
+  # Build and publish Chrome Extension
+  publish-chrome:
+    name: 🌐 Publish Chrome Extension
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'chrome' || github.event.inputs.platforms == 'web'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build common package
+        run: pnpm --filter common build
+
+      - name: Build Chrome extension
+        run: pnpm --filter chrome-ext build
+
+      - name: Package Chrome extension
+        run: |
+          cd chrome-ext/dist
+          zip -r ../phonocorrect-chrome-extension.zip .
+
+      - name: Upload to Chrome Web Store (Beta)
+        if: github.event.inputs.environment == 'beta' || contains(github.ref, '-beta')
+        run: |
+          npx chrome-webstore-upload-cli upload \
+            --source chrome-ext/phonocorrect-chrome-extension.zip \
+            --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
+            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
+            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
+            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }} \
+            --auto-publish false
+
+      - name: Upload to Chrome Web Store (Production)
+        if: github.event.inputs.environment == 'production' || !contains(github.ref, '-beta')
+        run: |
+          npx chrome-webstore-upload-cli upload \
+            --source chrome-ext/phonocorrect-chrome-extension.zip \
+            --extension-id ${{ secrets.CHROME_EXTENSION_ID }} \
+            --client-id ${{ secrets.CHROME_CLIENT_ID }} \
+            --client-secret ${{ secrets.CHROME_CLIENT_SECRET }} \
+            --refresh-token ${{ secrets.CHROME_REFRESH_TOKEN }} \
+            --auto-publish true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: chrome-extension
+          path: chrome-ext/phonocorrect-chrome-extension.zip
+
+  # Build and publish iOS app
+  publish-ios:
+    name: 📱 Publish iOS App
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'mobile'
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Install Fastlane
+        working-directory: mobile
+        run: |
+          gem install bundler
+          bundle install
+
+      - name: Setup Expo and EAS CLI
+        run: npm install -g @expo/cli eas-cli
+
+      - name: Decode signing certificates
+        env:
+          IOS_DIST_CERTIFICATE_BASE64: ${{ secrets.IOS_DIST_CERTIFICATE_BASE64 }}
+          IOS_DIST_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DIST_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          # Create certificates directory
+          mkdir -p mobile/ios/certificates
+          
+          # Decode and install distribution certificate
+          echo $IOS_DIST_CERTIFICATE_BASE64 | base64 --decode > mobile/ios/certificates/dist.p12
+          
+          # Decode provisioning profile
+          echo $IOS_PROVISIONING_PROFILE_BASE64 | base64 --decode > mobile/ios/certificates/profile.mobileprovision
+          
+          # Install certificate in keychain
+          security create-keychain -p "temp123" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "temp123" build.keychain
+          security import mobile/ios/certificates/dist.p12 -k build.keychain -P $IOS_DIST_CERTIFICATE_PASSWORD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "temp123" build.keychain
+          
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp mobile/ios/certificates/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Fastlane iOS Beta
+        if: github.event.inputs.environment == 'beta' || contains(github.ref, '-beta')
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+        run: bundle exec fastlane beta_ios
+
+      - name: Fastlane iOS Production
+        if: github.event.inputs.environment == 'production' || !contains(github.ref, '-beta')
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+        run: bundle exec fastlane release_ios
+
+  # Build and publish Android app
+  publish-android:
+    name: 🤖 Publish Android App
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'mobile'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Install Fastlane
+        working-directory: mobile
+        run: |
+          gem install bundler
+          bundle install
+
+      - name: Setup Expo and EAS CLI
+        run: npm install -g @expo/cli eas-cli
+
+      - name: Decode Google Play Service Account
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo $GOOGLE_PLAY_SERVICE_ACCOUNT_JSON | base64 --decode > mobile/google-play-service-account.json
+
+      - name: Fastlane Android Beta
+        if: github.event.inputs.environment == 'beta' || contains(github.ref, '-beta')
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+        run: bundle exec fastlane beta_android
+
+      - name: Fastlane Android Production
+        if: github.event.inputs.environment == 'production' || !contains(github.ref, '-beta')
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+        run: bundle exec fastlane release_android
+
+  # Build and publish Desktop apps with notarization
+  publish-desktop:
+    name: 🖥️ Publish Desktop Apps
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'desktop'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build common package
+        run: pnpm --filter common build
+
+      # macOS code signing and notarization
+      - name: Setup macOS signing
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Create keychain and install certificate
+          security create-keychain -p "temp123" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "temp123" build.keychain
+          
+          # Decode and install certificate
+          echo $MACOS_CERTIFICATE_BASE64 | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PASSWORD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "temp123" build.keychain
+          
+          # Set signing environment variables
+          echo "CSC_KEY_PASSWORD=$MACOS_CERTIFICATE_PASSWORD" >> $GITHUB_ENV
+          echo "CSC_LINK=$MACOS_CERTIFICATE_BASE64" >> $GITHUB_ENV
+          echo "APPLE_ID=$APPLE_ID" >> $GITHUB_ENV
+          echo "APPLE_ID_PASSWORD=$APPLE_ID_PASSWORD" >> $GITHUB_ENV
+          echo "APPLE_TEAM_ID=$APPLE_TEAM_ID" >> $GITHUB_ENV
+
+      # Windows code signing
+      - name: Setup Windows signing
+        if: runner.os == 'Windows'
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          echo $env:WINDOWS_CERTIFICATE_BASE64 | Out-File -FilePath certificate.txt
+          certutil -decode certificate.txt certificate.p12
+          echo "CSC_LINK=certificate.p12" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "CSC_KEY_PASSWORD=$env:WINDOWS_CERTIFICATE_PASSWORD" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build and package desktop app
+        working-directory: desktop
+        run: |
+          pnpm run build
+          pnpm run dist
+
+      # macOS notarization
+      - name: Notarize macOS app
+        if: runner.os == 'macOS' && (github.event.inputs.environment == 'production' || !contains(github.ref, '-beta'))
+        working-directory: desktop
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Find the DMG file
+          DMG_FILE=$(find electron-dist -name "*.dmg" | head -n 1)
+          
+          if [ -n "$DMG_FILE" ]; then
+            echo "Notarizing: $DMG_FILE"
+            
+            # Submit for notarization
+            xcrun notarytool submit "$DMG_FILE" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_ID_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait
+            
+            # Staple the notarization
+            xcrun stapler staple "$DMG_FILE"
+            
+            echo "✅ Notarization complete for $DMG_FILE"
+          else
+            echo "❌ No DMG file found for notarization"
+          fi
+
+      - name: Upload desktop artifacts (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v3
+        with:
+          name: desktop-linux
+          path: |
+            desktop/electron-dist/*.AppImage
+            desktop/electron-dist/*.deb
+            desktop/electron-dist/*.rpm
+
+      - name: Upload desktop artifacts (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v3
+        with:
+          name: desktop-windows
+          path: |
+            desktop/electron-dist/*.exe
+            desktop/electron-dist/*.msi
+            desktop/electron-dist/*.zip
+
+      - name: Upload desktop artifacts (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v3
+        with:
+          name: desktop-macos
+          path: |
+            desktop/electron-dist/*.dmg
+            desktop/electron-dist/*.zip
+
+  # Deploy web app to GitHub Pages
+  publish-web:
+    name: 🌐 Publish Web App
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'web'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build common package
+        run: pnpm --filter common build
+
+      - name: Build web app
+        working-directory: web
+        env:
+          NODE_ENV: production
+        run: pnpm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./web/.next
+          cname: phonocorrect.ai # Optional: your custom domain
+
+  # Create comprehensive release
+  create-release:
+    name: 📦 Create Release
+    needs: [publish-chrome, publish-ios, publish-android, publish-desktop, publish-web]
+    if: always() && (needs.publish-chrome.result == 'success' || needs.publish-ios.result == 'success' || needs.publish-android.result == 'success' || needs.publish-desktop.result == 'success' || needs.publish-web.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Get version and environment
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="manual-$(date +'%Y%m%d-%H%M')"
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+            if [[ "$VERSION" == *"-beta"* ]]; then
+              ENV="beta"
+            else
+              ENV="production"
+            fi
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT=$ENV" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: "PhonoCorrect AI ${{ steps.version.outputs.VERSION }} (${{ steps.version.outputs.ENVIRONMENT }})"
+          prerelease: ${{ steps.version.outputs.ENVIRONMENT == 'beta' }}
+          generate_release_notes: true
+          files: |
+            desktop-linux/*
+            desktop-windows/*
+            desktop-macos/*
+            chrome-extension/*
+          body: |
+            ## 🚀 PhonoCorrect AI ${{ steps.version.outputs.VERSION }}
+            
+            **Environment:** ${{ steps.version.outputs.ENVIRONMENT }}
+            **Build Date:** $(date -u +"%Y-%m-%d %H:%M UTC")
+            
+            ### 📱 Mobile Apps
+            - **iOS**: Available via TestFlight or App Store
+            - **Android**: Available via Google Play Store or Internal Testing
+            
+            ### 🖥️ Desktop Apps
+            - **macOS**: Universal binary with notarization
+            - **Windows**: Signed executable
+            - **Linux**: AppImage and package formats
+            
+            ### 🌐 Web & Extension
+            - **Web App**: Deployed to GitHub Pages
+            - **Chrome Extension**: Available on Chrome Web Store
+            
+            ### 🔐 Security Features
+            - Code signed binaries for all platforms
+            - Notarized macOS applications
+            - Chrome Web Store verification
+            
+            ### 📋 Installation
+            
+            **Desktop Apps:**
+            - macOS: Download DMG, mount and drag to Applications
+            - Windows: Download EXE and run installer
+            - Linux: Download AppImage, make executable and run
+            
+            **Chrome Extension:**
+            - Install directly from Chrome Web Store
+            - Or download ZIP for developer mode installation
+            
+            **Mobile Apps:**
+            - iOS: Join TestFlight beta or download from App Store
+            - Android: Download from Google Play Store
+            
+            ### 🔧 Technical Requirements
+            - **Desktop**: macOS 10.15+, Windows 10+, Ubuntu 18.04+
+            - **Mobile**: iOS 14+, Android 8.0+ (API 26)
+            - **Chrome**: Version 88+ (Manifest V3)
+            
+            ### 🐛 Known Issues & Limitations
+            See [GitHub Issues](https://github.com/yourusername/phonocorrect-ai/issues) for current known issues.
+
+      - name: Notify deployment channels
+        env:
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$SLACK_URL" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"🚀 PhonoCorrect AI ${{ steps.version.outputs.VERSION }} published to ${{ steps.version.outputs.ENVIRONMENT }}!\"}" \
+              $SLACK_URL
+          fi
+          
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"content\":\"🚀 PhonoCorrect AI ${{ steps.version.outputs.VERSION }} published to ${{ steps.version.outputs.ENVIRONMENT }}!\"}" \
+              $DISCORD_WEBHOOK
+          fi

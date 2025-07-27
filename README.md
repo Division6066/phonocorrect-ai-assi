@@ -17,14 +17,14 @@ A comprehensive phonetic spelling assistant that helps users write with confiden
 📲 **[Download QR Page](https://github.com/yourusername/phonocorrect-ai/releases/latest/download/qr.html)** - Scan QR codes for mobile apps
 
 ### Platform Downloads
-| Platform | Download | Requirements |
-|----------|----------|--------------|
-| 📱 **Android** | [Download APK](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Android 8.0+ |
-| 📱 **iOS** | [TestFlight Beta](https://testflight.apple.com/join/YOUR_CODE) | iOS 14.0+ |
-| 🖥️ **macOS** | [Download DMG](https://github.com/yourusername/phonocorrect-ai/releases/latest) | macOS 10.15+ |
-| 🖥️ **Windows** | [Download EXE](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Windows 10+ |
-| 🖥️ **Linux** | [Download AppImage](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Ubuntu 18.04+ |
-| 🌐 **Chrome** | [Extension ZIP](https://github.com/yourusername/phonocorrect-ai/releases/latest) | Chrome 88+ |
+| Platform | Download | Store | Requirements |
+|----------|----------|-------|--------------|
+| 📱 **Android** | [Download APK](https://github.com/yourusername/phonocorrect-ai/releases/latest) | [Google Play](https://play.google.com/store/apps/details?id=com.phonocorrect.ai) | Android 8.0+ |
+| 📱 **iOS** | [TestFlight Beta](https://testflight.apple.com/join/YOUR_CODE) | [App Store](https://apps.apple.com/app/phonocorrect-ai/idXXXXXXXX) | iOS 14.0+ |
+| 🖥️ **macOS** | [Download DMG](https://github.com/yourusername/phonocorrect-ai/releases/latest) | [Mac App Store](https://apps.apple.com/app/phonocorrect-ai/idXXXXXXXX) | macOS 10.15+ |
+| 🖥️ **Windows** | [Download EXE](https://github.com/yourusername/phonocorrect-ai/releases/latest) | [Microsoft Store](https://www.microsoft.com/store/apps/9NXXXXXXXX) | Windows 10+ |
+| 🖥️ **Linux** | [Download AppImage](https://github.com/yourusername/phonocorrect-ai/releases/latest) | [Snap Store](https://snapcraft.io/phonocorrect-ai) | Ubuntu 18.04+ |
+| 🌐 **Chrome** | [Extension ZIP](https://github.com/yourusername/phonocorrect-ai/releases/latest) | [Chrome Web Store](https://chrome.google.com/webstore/detail/phonocorrect-ai/XXXXXXXXXXXXXXXXXXXXXXXX) | Chrome 88+ |
 
 ### 📋 Installation Instructions
 
@@ -577,6 +577,111 @@ cd dist && zip -r ../phonocorrect-chrome-extension.zip .
 1. Download `phonocorrect-chrome-extension.zip`
 2. Unzip to local folder
 3. Load unpacked in Chrome Developer Mode
+
+## 🏪 Store Listings & Publication
+
+### 📋 Store Listing Assets TODO
+
+**High Priority Assets Needed:**
+- [ ] **App Icons** (1024x1024 master) for all platforms
+- [ ] **Feature Graphics** (1024x500 for Google Play)
+- [ ] **Screenshots** for all platforms and screen sizes
+- [ ] **Privacy Policy** and Terms of Service pages
+- [ ] **Demo Videos** (30-60 seconds each platform)
+
+**Platform-Specific Requirements:**
+
+#### 📱 iOS App Store
+- [ ] 1024x1024 app icon (no transparency)
+- [ ] Screenshots for iPhone 6.7", 6.5", 5.5", iPad Pro 12.9", 11"
+- [ ] App Store description (4000 chars max)
+- [ ] Keywords (100 chars max)
+- [ ] Privacy policy URL
+- [ ] Apple Developer Account ($99/year)
+
+#### 🤖 Google Play Store
+- [ ] 512x512 app icon
+- [ ] Feature graphic (1024x500)
+- [ ] Screenshots for phone, 7" tablet, 10" tablet
+- [ ] Store description (4000 chars max)
+- [ ] Google Play Console account ($25 one-time)
+
+#### 🌐 Chrome Web Store
+- [ ] 128x128 extension icon
+- [ ] Promotional images (440x280, 920x680, 1400x560)
+- [ ] Screenshots (1280x800 or 640x400)
+- [ ] Chrome Web Store developer account ($5 one-time)
+
+#### 🖥️ Desktop App Stores
+- [ ] **Mac App Store**: macOS app review and submission
+- [ ] **Microsoft Store**: Windows app certification
+- [ ] **Snap Store**: Linux package submission
+
+### 🚀 Publication Pipeline Status
+
+| Platform | Development | Beta Testing | Store Submission | Public Release |
+|----------|-------------|--------------|------------------|----------------|
+| **iOS** | ✅ Ready | 🟡 TestFlight setup needed | ❌ App Store Connect | ❌ Pending |
+| **Android** | ✅ Ready | 🟡 Internal testing ready | ❌ Play Console | ❌ Pending |
+| **Chrome** | ✅ Ready | ✅ Developer mode | ❌ Web Store | ❌ Pending |
+| **macOS** | ✅ Ready | ✅ DMG distribution | ❌ Mac App Store | ❌ Pending |
+| **Windows** | ✅ Ready | ✅ EXE distribution | ❌ Microsoft Store | ❌ Pending |
+| **Linux** | ✅ Ready | ✅ AppImage ready | 🟡 Snap Store prep | ❌ Pending |
+
+### 📝 Store Metadata
+
+Comprehensive store metadata has been prepared in `/assets/store-listings/`:
+- **iOS**: App Store Connect metadata and screenshots guide
+- **Android**: Google Play Console listing requirements
+- **Chrome**: Web Store description and permission justifications
+- **Desktop**: Multi-store preparation and assets checklist
+
+### 🔐 Code Signing & Certificates Status
+
+#### Required Certificates (TODO)
+- [ ] **Apple Developer Certificate** for iOS/macOS code signing
+- [ ] **Windows Code Signing Certificate** for executable signing
+- [ ] **Google Play Upload Key** for Android app signing
+
+#### Current Security Status
+- **Desktop apps**: Self-signed (security warnings expected)
+- **Mobile apps**: Development certificates only
+- **Browser extension**: Manifest V3 compliant, unpacked distribution
+
+### 🎯 Publication Roadmap
+
+#### Phase 1: Beta Testing (Current)
+- ✅ Direct distribution via GitHub Releases
+- ✅ QR code download page for easy mobile installation
+- ✅ TestFlight beta preparation
+- ✅ Google Play Internal Testing ready
+
+#### Phase 2: Store Preparation
+- [ ] Complete asset creation (icons, screenshots, videos)
+- [ ] Privacy policy and legal pages deployment
+- [ ] Store account setup and verification
+- [ ] Code signing certificate acquisition
+
+#### Phase 3: Store Submission
+- [ ] iOS App Store submission and review
+- [ ] Google Play Store submission and review
+- [ ] Chrome Web Store publication
+- [ ] Desktop app store submissions
+
+#### Phase 4: Public Launch
+- [ ] Marketing website deployment
+- [ ] Press kit and announcement materials
+- [ ] User documentation and support system
+- [ ] Analytics and crash reporting integration
+
+### 📊 Distribution Analytics Setup (TODO)
+- [ ] Download tracking with GitHub API integration
+- [ ] Crash reporting (Bugsnag/Sentry) for all platforms
+- [ ] Update notifications system
+- [ ] Privacy-compliant usage analytics
+- [ ] Store performance monitoring
+
+See `/assets/store-listings/README.md` for detailed asset requirements and guidelines.
 
 ### 📄 Release Artifacts
 

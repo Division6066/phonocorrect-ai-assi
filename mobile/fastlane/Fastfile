@@ -1,0 +1,159 @@
+# This file contains the fastlane configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta_ios do
+    ensure_git_status_clean
+
+    # Increment build number
+    increment_build_number(xcodeproj: "ios/PhonoCorrectAI.xcodeproj")
+
+    # Build the app using EAS
+    sh("cd .. && eas build --platform ios --profile preview --non-interactive")
+
+    # Download the IPA from EAS
+    # Note: This requires EAS CLI and proper authentication
+    # The actual download would need the build ID from EAS response
+    
+    # Upload to TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      skip_submission: true,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+
+    # Send notification
+    slack(
+      message: "🚀 New iOS beta build uploaded to TestFlight!",
+      channel: "#releases",
+      default_payloads: [:git_branch, :git_author],
+      username: "Fastlane Bot"
+    ) if ENV["SLACK_URL"]
+  end
+
+  desc "Deploy a new version to the App Store"
+  lane :release_ios do
+    ensure_git_status_clean
+
+    # Increment version number
+    increment_version_number(xcodeproj: "ios/PhonoCorrectAI.xcodeproj")
+    increment_build_number(xcodeproj: "ios/PhonoCorrectAI.xcodeproj")
+
+    # Build the app using EAS
+    sh("cd .. && eas build --platform ios --profile production --non-interactive")
+
+    # Submit to App Store
+    upload_to_app_store(
+      submit_for_review: false,
+      automatic_release: false,
+      force: true,
+      skip_metadata: true,
+      skip_screenshots: true
+    )
+
+    slack(
+      message: "📱 New iOS version submitted to App Store!",
+      channel: "#releases",
+      default_payloads: [:git_branch, :git_author],
+      username: "Fastlane Bot"
+    ) if ENV["SLACK_URL"]
+  end
+end
+
+platform :android do
+  desc "Deploy a new version to Google Play Internal Testing"
+  lane :beta_android do
+    ensure_git_status_clean
+
+    # Build AAB using EAS
+    sh("cd .. && eas build --platform android --profile preview --non-interactive")
+
+    # Note: In a real scenario, you'd download the AAB from EAS
+    # For now, we'll simulate the upload process
+    
+    # Upload to Google Play Internal Testing
+    upload_to_play_store(
+      track: 'internal',
+      release_status: 'draft',
+      aab: '../build/app-release.aab', # This would be the downloaded file from EAS
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+
+    slack(
+      message: "🤖 New Android beta uploaded to Google Play Internal Testing!",
+      channel: "#releases",
+      default_payloads: [:git_branch, :git_author],
+      username: "Fastlane Bot"
+    ) if ENV["SLACK_URL"]
+  end
+
+  desc "Deploy a new version to Google Play Store"
+  lane :release_android do
+    ensure_git_status_clean
+
+    # Build production AAB using EAS
+    sh("cd .. && eas build --platform android --profile production --non-interactive")
+
+    # Upload to Google Play Store
+    upload_to_play_store(
+      track: 'production',
+      release_status: 'draft',
+      aab: '../build/app-release.aab',
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false
+    )
+
+    slack(
+      message: "📱 New Android version submitted to Google Play Store!",
+      channel: "#releases", 
+      default_payloads: [:git_branch, :git_author],
+      username: "Fastlane Bot"
+    ) if ENV["SLACK_URL"]
+  end
+end
+
+# Cross-platform lanes
+desc "Run tests on both platforms"
+lane :test do
+  sh("cd .. && pnpm test")
+end
+
+desc "Deploy beta to both platforms"
+lane :beta_all do
+  beta_ios
+  beta_android
+end
+
+desc "Deploy release to both platforms"
+lane :release_all do
+  release_ios
+  release_android
+end
+
+# Error handling
+error do |lane, exception|
+  slack(
+    message: "❌ Lane #{lane} failed with exception: #{exception}",
+    channel: "#releases",
+    success: false,
+    username: "Fastlane Bot"
+  ) if ENV["SLACK_URL"]
+end

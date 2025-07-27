@@ -45,6 +45,23 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
       }
+    },
+    "beta_ios": {
+      "extends": "preview",
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m1-medium",
+        "buildConfiguration": "Release",
+        "autoIncrement": "buildNumber"
+      }
+    },
+    "beta_android": {
+      "extends": "preview", 
+      "distribution": "internal",
+      "android": {
+        "buildType": "aab",
+        "autoIncrement": "versionCode"
+      }
     }
   },
   "submit": {
@@ -52,6 +69,17 @@
       "ios": {
         "appleId": "your-apple-id@example.com",
         "ascAppId": "123456789",
+        "appleTeamId": "ABCD123456"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
+      }
+    },
+    "beta": {
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "123456789", 
         "appleTeamId": "ABCD123456"
       },
       "android": {
