@@ -2,12 +2,22 @@
 
 A comprehensive phonetic spelling assistant that helps users write with confidence across all platforms. PhonoCorrect AI provides intelligent suggestions based on how words sound, not just how they're spelled.
 
+## ✨ Features
+
+- **🎯 On-device ML inference** with Gemma-2B and MediaPipe
+- **🗣️ Multi-language speech-to-text** with Whisper
+- **🌐 Cross-platform support** (Web, Desktop, Mobile, Browser Extension)
+- **⚡ Real-time phonetic correction** with sub-120ms latency
+- **🔒 Privacy-first** offline operation
+- **🎨 Beautiful, accessible UI** with shadcn components
+
 ## 📁 Project Structure
 
 ```
 phonocorrect-ai/
 ├── packages/
-│   └── common/              # Shared TypeScript utilities & logic
+│   ├── common/              # Shared TypeScript utilities & logic
+│   └── ml-core/             # 🆕 On-device ML inference (Gemma-2B + MediaPipe)
 ├── mobile/                  # React Native app (Expo)
 ├── desktop/                 # Electron app with React & Vite
 ├── web/                     # Next.js 15 web application
@@ -15,6 +25,49 @@ phonocorrect-ai/
 ├── keyboard-ios/            # SwiftUI custom keyboard
 ├── keyboard-android/        # Kotlin Input Method Service
 └── .github/workflows/       # CI/CD pipeline
+```
+
+## 🤖 ML Core Integration
+
+PhonoCorrect AI now includes a sophisticated on-device ML engine for enhanced phonetic correction:
+
+### Features
+- **MediaPipe LLM Inference API** for real-time text correction
+- **Gemma-2B model** with 4-bit quantization (1.2GB)
+- **Cross-platform bridges** for React Native, Electron, and Web
+- **Fallback engine** for environments without ML support
+
+### Architecture
+```
+packages/ml-core/
+├── src/
+│   ├── cpp/                    # Native C++ implementations
+│   │   ├── mediapipe_wrapper.cpp  # MediaPipe integration
+│   │   ├── gemma_bridge.cpp       # Node.js native addon
+│   │   └── gemma_wasm.cpp         # WebAssembly bindings
+│   ├── react-native/          # React Native TurboModule
+│   ├── electron/               # Electron native addon
+│   ├── web/                    # WebAssembly bridge
+│   └── types.ts               # TypeScript interfaces
+├── scripts/
+│   └── fetch-models.ts        # Model download utility
+└── tests/
+    └── gemma.test.ts          # Unit tests
+```
+
+### Usage
+```typescript
+import { phonoCorrect, GemmaBridge } from '@phonocorrect/ml-core';
+
+// Simple correction
+const corrected = await phonoCorrect('I need my fone');
+console.log(corrected); // "I need my phone"
+
+// Advanced usage with detailed corrections
+const gemma = await GemmaBridge.loadGemma();
+const details = await gemma.phonoCorrectWithDetails('recieve the package');
+console.log(details);
+// [{ original: 'recieve', corrected: 'receive', confidence: 0.95, position: 0 }]
 ```
 
 ## 🚀 Quick Start
@@ -37,8 +90,12 @@ cd phonocorrect-ai
 # Install dependencies for all packages
 pnpm install
 
-# Build shared common package
+# Build shared packages
 pnpm build:common
+pnpm build:ml-core
+
+# Download ML models (optional, for enhanced corrections)
+pnpm fetch-models:all
 ```
 
 ### Development
@@ -52,17 +109,40 @@ pnpm dev:web        # Next.js web app
 pnpm dev:desktop    # Electron app
 pnpm dev:mobile     # React Native app
 pnpm dev:chrome     # Chrome extension
+
+# ML Core specific commands
+pnpm --filter ml-core build      # Build native modules
+pnpm --filter ml-core test       # Run ML tests
+pnpm fetch-models gemma-2b-q4 web  # Download specific model
 ```
 
 ## 📦 Packages
+
+### 🤖 packages/ml-core
+
+On-device machine learning inference using MediaPipe and Gemma-2B for enhanced phonetic spelling correction.
+
+**Features:**
+- MediaPipe LLM Inference API integration
+- Gemma-2B 4-bit quantized model (1.2GB)
+- Cross-platform bridges (React Native, Electron, Web)
+- Real-time phonetic correction with <120ms latency
+- Offline operation with privacy-first design
+
+**Performance Targets:**
+| Device Class | Memory Usage | Latency |
+|--------------|-------------|---------|
+| Low-end (2GB) | ≤ 300 MB | < 120 ms |
+| Mid-range (4GB) | ≤ 600 MB | < 60 ms |
+| High-end (8GB+) | ≤ 1GB | < 30 ms |
 
 ### 🔧 packages/common
 
 Shared TypeScript utilities and business logic used across all platforms.
 
 **Features:**
-- Phonetic pattern recognition
-- ML engine interfaces
+- Phonetic pattern recognition (fallback engine)
+- ML engine interfaces and type definitions
 - Speech-to-text and text-to-speech engines
 - Reusable React components
 - Common utilities and types

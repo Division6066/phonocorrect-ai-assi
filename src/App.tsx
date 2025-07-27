@@ -31,6 +31,7 @@ function App() {
   const {
     suggestions,
     isAnalyzing,
+    isMLReady,
     recordFeedback,
     applySuggestion,
     getConfidenceColor,
@@ -196,6 +197,11 @@ function App() {
             {isElectron && (
               <Badge variant="outline" className="ml-2">
                 Desktop App
+              </Badge>
+            )}
+            {isMLReady && (
+              <Badge variant="outline" className="ml-2 bg-green-100 text-green-800">
+                ML Ready
               </Badge>
             )}
           </div>

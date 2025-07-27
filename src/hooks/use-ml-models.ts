@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
 
 export interface WhisperConfig {
@@ -27,9 +27,44 @@ export interface MLModelState {
     error: string | null;
     config: GemmaConfig;
   };
+  mlCore: {
+    available: boolean;
+    version: string | null;
+    initialized: boolean;
+  };
 }
 
-// Mock ML model implementations (actual models would be loaded as WebAssembly modules)
+// ML Core integration
+let GemmaBridge: any = null;
+let gemmaInstance: any = null;
+
+const initializeMLCore = async () => {
+  if (GemmaBridge) return GemmaBridge;
+  
+  try {
+    // Detect environment and load appropriate bridge
+    if (typeof window !== 'undefined') {
+      // Web environment
+      const { GemmaBridge: WebBridge } = await import('../../packages/ml-core/src/web/GemmaBridge');
+      await WebBridge.loadWasm();
+      GemmaBridge = WebBridge;
+    } else if (typeof process !== 'undefined' && process.versions?.electron) {
+      // Electron environment
+      const { GemmaBridge: ElectronBridge } = await import('../../packages/ml-core/src/electron/GemmaBridge');
+      GemmaBridge = ElectronBridge;
+    } else {
+      console.warn('[ML Models] ML Core not available in this environment');
+      return null;
+    }
+    
+    return GemmaBridge;
+  } catch (error) {
+    console.warn('[ML Models] Failed to initialize ML Core:', error);
+    return null;
+  }
+};
+
+// Mock ML model implementations (fallback for when ML Core is not available)
 class WhisperModel {
   private config: WhisperConfig;
   private isLoaded = false;
@@ -96,7 +131,16 @@ class GemmaModel {
   async correctPhonetic(text: string): Promise<string> {
     if (!this.isLoaded) throw new Error('Model not loaded');
     
-    // Mock phonetic correction using Gemma
+    // Try ML Core first, fallback to mock
+    if (gemmaInstance) {
+      try {
+        return await gemmaInstance.phonoCorrect(text);
+      } catch (error) {
+        console.warn('[ML Models] ML Core correction failed, using fallback:', error);
+      }
+    }
+    
+    // Mock phonetic correction fallback
     await new Promise(resolve => setTimeout(resolve, 300));
     
     const corrections: { [key: string]: string } = {
@@ -163,11 +207,49 @@ export function useMLModels() {
       loading: false,
       error: null,
       config: gemmaConfig
+    },
+    mlCore: {
+      available: false,
+      version: null,
+      initialized: false
     }
   });
 
   const whisperModel = useRef<WhisperModel | null>(null);
   const gemmaModel = useRef<GemmaModel | null>(null);
+
+  // Initialize ML Core on mount
+  useEffect(() => {
+    const initML = async () => {
+      try {
+        const bridge = await initializeMLCore();
+        if (bridge) {
+          const version = bridge.getVersion();
+          setModelState(prev => ({
+            ...prev,
+            mlCore: {
+              available: true,
+              version,
+              initialized: true
+            }
+          }));
+          console.log(`[ML Models] ML Core initialized (${version})`);
+        }
+      } catch (error) {
+        console.warn('[ML Models] ML Core initialization failed:', error);
+        setModelState(prev => ({
+          ...prev,
+          mlCore: {
+            available: false,
+            version: null,
+            initialized: false
+          }
+        }));
+      }
+    };
+
+    initML();
+  }, []);
 
   const loadWhisperModel = useCallback(async () => {
     setModelState(prev => ({
@@ -202,6 +284,22 @@ export function useMLModels() {
     }));
 
     try {
+      // Try to load ML Core Gemma first
+      if (GemmaBridge && !gemmaInstance) {
+        try {
+          gemmaInstance = await GemmaBridge.loadGemma({
+            modelPath: `/assets/models/gemma-2b-q4.onnx`,
+            maxTokens: gemmaConfig.maxTokens,
+            temperature: gemmaConfig.temperature
+          });
+          console.log('[ML Models] ML Core Gemma instance loaded successfully');
+        } catch (mlError) {
+          console.warn('[ML Models] ML Core Gemma failed, using fallback:', mlError);
+          gemmaInstance = null;
+        }
+      }
+
+      // Always load fallback model as well
       gemmaModel.current = new GemmaModel(gemmaConfig);
       await gemmaModel.current.load();
       
@@ -259,6 +357,15 @@ export function useMLModels() {
     }));
   }, [gemmaConfig, setGemmaConfig]);
 
+  const getMLCoreStatus = useCallback(() => {
+    return {
+      available: modelState.mlCore.available,
+      version: modelState.mlCore.version,
+      gemmaInstance: gemmaInstance ? 'loaded' : 'not loaded',
+      bridge: GemmaBridge ? 'initialized' : 'not initialized'
+    };
+  }, [modelState.mlCore]);
+
   return {
     modelState,
     loadWhisperModel,
@@ -269,6 +376,7 @@ export function useMLModels() {
     enhanceText,
     updateWhisperConfig,
     updateGemmaConfig,
+    getMLCoreStatus,
     whisperConfig,
     gemmaConfig
   };

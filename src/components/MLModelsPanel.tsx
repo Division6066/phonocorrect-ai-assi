@@ -22,6 +22,7 @@ export function MLModelsPanel() {
     enhanceText,
     updateWhisperConfig,
     updateGemmaConfig,
+    getMLCoreStatus,
     whisperConfig,
     gemmaConfig
   } = useMLModels();
@@ -112,6 +113,63 @@ export function MLModelsPanel() {
           <p className="text-muted-foreground mb-4">
             Real speech processing with Whisper and Gemma for enhanced phonetic correction.
           </p>
+
+          {/* ML Core Status */}
+          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Cpu size={16} />
+                ML Core Engine
+                <Badge 
+                  variant="outline" 
+                  className={modelState.mlCore.available ? "text-green-600 border-green-300" : "text-gray-600"}
+                >
+                  {modelState.mlCore.available ? "Active" : "Fallback Mode"}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Version:</span>
+                  <span className="ml-2 text-muted-foreground">
+                    {modelState.mlCore.version || 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-medium">Status:</span>
+                  <span className="ml-2 text-muted-foreground">
+                    {modelState.mlCore.initialized ? 'Initialized' : 'Not Available'}
+                  </span>
+                </div>
+              </div>
+              
+              {modelState.mlCore.available && (
+                <div className="text-xs text-blue-700 bg-blue-100 p-2 rounded">
+                  🚀 Enhanced ML corrections using MediaPipe & Gemma-2B
+                </div>
+              )}
+              
+              {!modelState.mlCore.available && (
+                <div className="text-xs text-amber-700 bg-amber-100 p-2 rounded">
+                  ⚠️ Using pattern-based fallback corrections
+                </div>
+              )}
+
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  const status = getMLCoreStatus();
+                  toast.info(`ML Core Status: ${JSON.stringify(status, null, 2)}`);
+                }}
+                className="w-full"
+              >
+                <Settings size={14} className="mr-2" />
+                Show Debug Info
+              </Button>
+            </CardContent>
+          </Card>
           
           <div className="grid md:grid-cols-2 gap-4">
             {/* Whisper Model */}
