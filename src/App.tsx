@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText } from "@phosphor-icons/react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 // Simple mock interfaces
@@ -46,7 +47,56 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<keyof typeof EXAMPLE_TEXTS>('en');
   const [activeTab, setActiveTab] = useState("writing");
+  const [setupStep, setSetupStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Development setup steps
+  const setupSteps = [
+    {
+      title: "Apple Developer Account Setup",
+      description: "Register and configure your Apple Developer account",
+      platform: "iOS/macOS"
+    },
+    {
+      title: "iOS Development Certificates",
+      description: "Generate development and distribution certificates",
+      platform: "iOS"
+    },
+    {
+      title: "Provisioning Profiles",
+      description: "Create app-specific provisioning profiles",
+      platform: "iOS"
+    },
+    {
+      title: "Google Play Console Setup",
+      description: "Register your Google Play Console developer account",
+      platform: "Android"
+    },
+    {
+      title: "Android Signing Keys",
+      description: "Generate release signing keys and upload key",
+      platform: "Android"
+    },
+    {
+      title: "CI/CD Configuration",
+      description: "Configure automated build and deployment",
+      platform: "Both"
+    }
+  ];
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(`${label} copied to clipboard`);
+    });
+  };
+
+  const markStepComplete = (stepIndex: number) => {
+    if (!completedSteps.includes(stepIndex)) {
+      setCompletedSteps([...completedSteps, stepIndex]);
+      toast.success("Step marked as complete!");
+    }
+  };
 
   // Simple analysis function
   const analyzeText = (inputText: string) => {
@@ -138,11 +188,11 @@ function App() {
             </div>
             <h1 className="text-3xl font-bold">PhonoCorrect AI</h1>
             <Badge variant="outline" className="ml-2 bg-green-100 text-green-800">
-              ML Ready (CPU)
+              Development Setup
             </Badge>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            AI-powered phonetic spelling assistant for dyslexic and ADHD users
+            AI-powered phonetic spelling assistant with secure developer account setup
           </p>
         </div>
 
@@ -150,10 +200,14 @@ function App() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="writing" className="flex items-center gap-2">
                   <Lightbulb size={14} />
                   Writing
+                </TabsTrigger>
+                <TabsTrigger value="developer" className="flex items-center gap-2">
+                  <Shield size={14} />
+                  Developer
                 </TabsTrigger>
                 <TabsTrigger value="language" className="flex items-center gap-2">
                   <Globe size={14} />
@@ -259,6 +313,211 @@ function App() {
                 )}
               </TabsContent>
 
+              <TabsContent value="developer" className="space-y-6 mt-6">
+                {/* Developer Setup */}
+                <Alert>
+                  <Shield className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Safe alternative:</strong> This guide provides secure setup instructions without handling actual credentials. 
+                    Never commit certificates or private keys to your repository.
+                  </AlertDescription>
+                </Alert>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Key size={16} />
+                      Developer Account & Certificate Setup
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {setupSteps.map((step, index) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                                  completedSteps.includes(index) 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {completedSteps.includes(index) ? '✓' : index + 1}
+                                </div>
+                                <h3 className="font-medium">{step.title}</h3>
+                                <Badge variant="outline" className="text-xs">
+                                  {step.platform}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {step.description}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant={completedSteps.includes(index) ? "outline" : "default"}
+                              onClick={() => markStepComplete(index)}
+                              className="ml-4"
+                            >
+                              {completedSteps.includes(index) ? (
+                                <>
+                                  <CheckCircle size={14} className="mr-1" />
+                                  Done
+                                </>
+                              ) : (
+                                'Mark Complete'
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Step-specific content */}
+                          {index === 0 && (
+                            <div className="bg-muted/50 rounded p-3 text-sm">
+                              <p className="font-medium mb-2">Required Actions:</p>
+                              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Visit <a href="https://developer.apple.com" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">developer.apple.com</a></li>
+                                <li>Create Apple Developer account ($99/year)</li>
+                                <li>Verify your legal entity information</li>
+                                <li>Accept agreements and set up banking</li>
+                              </ul>
+                            </div>
+                          )}
+
+                          {index === 1 && (
+                            <div className="bg-muted/50 rounded p-3 text-sm space-y-3">
+                              <div>
+                                <p className="font-medium mb-2">Certificate Generation Commands:</p>
+                                <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span># Generate Certificate Signing Request</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('openssl req -new -newkey rsa:2048 -nodes -keyout ios_dev.key -out ios_dev.csr', 'iOS Dev CSR Command')}>
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                  <div>openssl req -new -newkey rsa:2048 -nodes \</div>
+                                  <div>  -keyout ios_dev.key -out ios_dev.csr</div>
+                                </div>
+                              </div>
+                              <Alert>
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertDescription className="text-xs">
+                                  Store private keys (.key files) securely and never commit them to version control.
+                                </AlertDescription>
+                              </Alert>
+                            </div>
+                          )}
+
+                          {index === 3 && (
+                            <div className="bg-muted/50 rounded p-3 text-sm">
+                              <p className="font-medium mb-2">Required Actions:</p>
+                              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Visit <a href="https://play.google.com/console" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Play Console</a></li>
+                                <li>Create developer account ($25 one-time fee)</li>
+                                <li>Verify identity and payment method</li>
+                                <li>Complete developer profile</li>
+                              </ul>
+                            </div>
+                          )}
+
+                          {index === 4 && (
+                            <div className="bg-muted/50 rounded p-3 text-sm space-y-3">
+                              <div>
+                                <p className="font-medium mb-2">Keystore Generation:</p>
+                                <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span># Generate Android Signing Key</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('keytool -genkey -v -keystore phono-release-key.keystore -alias phono-key-alias -keyalg RSA -keysize 2048 -validity 10000', 'Android Keystore Command')}>
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                  <div>keytool -genkey -v -keystore phono-release-key.keystore \</div>
+                                  <div>  -alias phono-key-alias -keyalg RSA -keysize 2048 \</div>
+                                  <div>  -validity 10000</div>
+                                </div>
+                              </div>
+                              <Alert>
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertDescription className="text-xs">
+                                  Backup your keystore file securely. Losing it means you cannot update your app.
+                                </AlertDescription>
+                              </Alert>
+                            </div>
+                          )}
+
+                          {index === 5 && (
+                            <div className="bg-muted/50 rounded p-3 text-sm">
+                              <p className="font-medium mb-2">Environment Variables Template:</p>
+                              <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <span># Add to CI/CD secrets</span>
+                                  <Button size="sm" variant="ghost" onClick={() => copyToClipboard(`APPLE_CERTIFICATE_P12_BASE64=\nAPPLE_CERTIFICATE_PASSWORD=\nANDROID_KEYSTORE_BASE64=\nANDROID_KEYSTORE_PASSWORD=\nANDROID_KEY_ALIAS=\nANDROID_KEY_PASSWORD=`, 'Environment Variables')}>
+                                    <Copy size={12} />
+                                  </Button>
+                                </div>
+                                <div>APPLE_CERTIFICATE_P12_BASE64=</div>
+                                <div>APPLE_CERTIFICATE_PASSWORD=</div>
+                                <div>ANDROID_KEYSTORE_BASE64=</div>
+                                <div>ANDROID_KEYSTORE_PASSWORD=</div>
+                                <div>ANDROID_KEY_ALIAS=</div>
+                                <div>ANDROID_KEY_PASSWORD=</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Progress Summary */}
+                    <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Setup Progress</span>
+                        <span className="text-sm text-muted-foreground">
+                          {completedSteps.length} of {setupSteps.length} steps completed
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(completedSteps.length / setupSteps.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Security Checklist */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium">Security Checklist</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-600" />
+                        <span>Never commit certificates or private keys to version control</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-600" />
+                        <span>Use environment variables for sensitive data in CI/CD</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-600" />
+                        <span>Backup signing keys in secure, encrypted storage</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-600" />
+                        <span>Use strong passwords for all certificates and keystores</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} className="text-green-600" />
+                        <span>Enable two-factor authentication on developer accounts</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="language" className="mt-6">
               <TabsContent value="language" className="mt-6">
                 <Card>
                   <CardHeader>
@@ -406,8 +665,8 @@ function App() {
                   <span>Cloud Sync Available</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Rocket size={14} />
-                  <span>Mobile Extension Ready</span>
+                  <Shield size={14} />
+                  <span>Developer Certificates Ready</span>
                 </div>
               </CardContent>
             </Card>
