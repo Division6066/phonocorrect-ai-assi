@@ -225,4 +225,42 @@ export class PhoneticEngine {
     if (confidence >= 0.6) return "Medium confidence";
     return "Low confidence";
   }
+
+  // Find differences between original and corrected text to generate suggestions
+  findDifferences(original: string, corrected: string): Suggestion[] {
+    const suggestions: Suggestion[] = [];
+    
+    if (original === corrected) return suggestions;
+    
+    // Simple word-level diff for demonstration
+    const originalWords = original.split(/\s+/);
+    const correctedWords = corrected.split(/\s+/);
+    
+    let originalIndex = 0;
+    let correctedIndex = 0;
+    let charPosition = 0;
+    
+    while (originalIndex < originalWords.length && correctedIndex < correctedWords.length) {
+      const originalWord = originalWords[originalIndex];
+      const correctedWord = correctedWords[correctedIndex];
+      
+      if (originalWord !== correctedWord) {
+        suggestions.push({
+          original: originalWord,
+          suggestion: correctedWord,
+          pattern: `hw-accelerated-${originalWord}`,
+          confidence: 0.9, // Hardware acceleration tends to be high confidence
+          startIndex: charPosition,
+          endIndex: charPosition + originalWord.length,
+          explanation: `Hardware-accelerated ML suggestion: "${originalWord}" → "${correctedWord}"`
+        });
+      }
+      
+      charPosition += originalWord.length + 1; // +1 for space
+      originalIndex++;
+      correctedIndex++;
+    }
+    
+    return suggestions;
+  }
 }

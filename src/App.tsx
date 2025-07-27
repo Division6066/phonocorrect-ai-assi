@@ -16,7 +16,8 @@ import { PremiumAccountCard } from "@/components/PremiumAccountCard";
 import { MLModelsPanel } from "@/components/MLModelsPanel";
 import { CloudSyncPanel } from "@/components/CloudSyncPanel";
 import { DeploymentPanel } from "@/components/DeploymentPanel";
-import { Brain, Lightbulb, RotateCcw, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket } from "@phosphor-icons/react";
+import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
+import { Brain, Lightbulb, RotateCcw, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Zap } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 const EXAMPLE_TEXT = "I recieve your fone call about the seperate meetng. Would of been nice to no earlier. Definately going thru the new fisiscs problems.";
@@ -32,6 +33,8 @@ function App() {
     suggestions,
     isAnalyzing,
     isMLReady,
+    accelerationType,
+    performanceMetrics,
     recordFeedback,
     applySuggestion,
     getConfidenceColor,
@@ -201,7 +204,12 @@ function App() {
             )}
             {isMLReady && (
               <Badge variant="outline" className="ml-2 bg-green-100 text-green-800">
-                ML Ready
+                ML Ready ({accelerationType})
+              </Badge>
+            )}
+            {performanceMetrics && (
+              <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800">
+                {performanceMetrics.inferenceTimeMs.toFixed(1)}ms
               </Badge>
             )}
           </div>
@@ -220,10 +228,14 @@ function App() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="writing" className="flex items-center gap-2">
                   <Lightbulb size={14} />
                   Writing
+                </TabsTrigger>
+                <TabsTrigger value="acceleration" className="flex items-center gap-2">
+                  <Zap size={14} />
+                  Hardware
                 </TabsTrigger>
                 <TabsTrigger value="ml-models" className="flex items-center gap-2">
                   <Cpu size={14} />
@@ -380,6 +392,10 @@ function App() {
                 )}
               </TabsContent>
 
+              <TabsContent value="acceleration" className="mt-6">
+                <HardwareAccelerationPanel />
+              </TabsContent>
+
               <TabsContent value="ml-models" className="mt-6">
                 <MLModelsPanel />
               </TabsContent>
@@ -394,8 +410,8 @@ function App() {
             </Tabs>
           </div>
 
-          {/* Sidebar - only visible on writing tab */}
-          {activeTab === "writing" && (
+          {/* Sidebar - only visible on writing and acceleration tabs */}
+          {(activeTab === "writing" || activeTab === "acceleration") && (
             <div className="space-y-6">
               <PremiumAccountCard />
               <LearningStats preferences={userPreferences} />
