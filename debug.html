@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<head>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Debug - PhonoCorrect AI</title>
-    <style>
+</head>
         body { font-family: Arial, sans-serif; padding: 20px; }
         .error { color: red; background: #ffe6e6; padding: 10px; margin: 10px 0; border-radius: 4px; }
         .success { color: green; background: #e6ffe6; padding: 10px; margin: 10px 0; border-radius: 4px; }
         .info { color: blue; background: #e6f3ff; padding: 10px; margin: 10px 0; border-radius: 4px; }
     </style>
-</head>
+       
 <body>
-    <h1>PhonoCorrect AI - Debug Page</h1>
+            addStatus('✅ Debug page loade
     <div id="status">Loading...</div>
     
     <script type="module">
-        const statusEl = document.getElementById('status');
+            
         
-        function addStatus(message, type = 'info') {
+                addStatus('✅ App module loaded succe
             const div = document.createElement('div');
             div.className = type;
             div.textContent = message;
@@ -30,32 +30,31 @@
             
             // Test basic React imports
             const reactModule = await import('react');
-            addStatus('✅ React module loaded', 'success');
-            
-            const reactDomModule = await import('react-dom/client');
-            addStatus('✅ React DOM module loaded', 'success');
-            
-            // Test our main app
-            try {
-                const appModule = await import('./src/App.tsx');
-                addStatus('✅ App module loaded successfully', 'success');
-            } catch (err) {
-                addStatus(`❌ Failed to load App: ${err.message}`, 'error');
-                console.error('App load error:', err);
-            }
-            
-            // Test components
-            try {
-                const buttonModule = await import('./src/components/ui/button.tsx');
-                addStatus('✅ Button component loaded', 'success');
-            } catch (err) {
-                addStatus(`❌ Failed to load Button: ${err.message}`, 'error');
-            }
-            
-        } catch (err) {
-            addStatus(`❌ Critical error: ${err.message}`, 'error');
-            console.error('Critical error:', err);
-        }
-    </script>
-</body>
-</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
