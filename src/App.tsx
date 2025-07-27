@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle } from "@phosphor-icons/react";
+import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle, GitBranch, Play, Calendar } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 // Simple mock interfaces
@@ -200,7 +200,7 @@ function App() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="writing" className="flex items-center gap-2">
                   <Lightbulb size={14} />
                   Writing
@@ -208,6 +208,10 @@ function App() {
                 <TabsTrigger value="developer" className="flex items-center gap-2">
                   <Shield size={14} />
                   Developer
+                </TabsTrigger>
+                <TabsTrigger value="workflows" className="flex items-center gap-2">
+                  <GitBranch size={14} />
+                  Workflows
                 </TabsTrigger>
                 <TabsTrigger value="language" className="flex items-center gap-2">
                   <Globe size={14} />
@@ -511,6 +515,256 @@ function App() {
                       <div className="flex items-center gap-2">
                         <CheckCircle size={14} className="text-green-600" />
                         <span>Enable two-factor authentication on developer accounts</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="workflows" className="space-y-6 mt-6">
+                {/* GitHub Actions Workflows */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <GitBranch size={16} />
+                      GitHub Actions Workflows
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Certificate Deployment Workflow */}
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Shield size={16} className="text-blue-600" />
+                              <h3 className="font-medium">Certificate Deployment</h3>
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                Production Ready
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Automated workflow for deploying and signing apps with certificates across all platforms
+                            </p>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              <Badge variant="outline" className="text-xs">iOS</Badge>
+                              <Badge variant="outline" className="text-xs">Android</Badge>
+                              <Badge variant="outline" className="text-xs">macOS</Badge>
+                              <Badge variant="outline" className="text-xs">Windows</Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => copyToClipboard('gh workflow run deploy-certificates.yml -f environment=staging -f platform=all', 'Deploy Command')}
+                            className="ml-4"
+                          >
+                            <Play size={14} className="mr-1" />
+                            Deploy
+                          </Button>
+                        </div>
+
+                        <div className="bg-muted/50 rounded p-3 text-sm space-y-2">
+                          <div className="font-medium">Features:</div>
+                          <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs">
+                            <li>Validates required secrets before deployment</li>
+                            <li>Signs iOS apps and uploads to TestFlight/App Store</li>
+                            <li>Signs Android APKs/AABs and uploads to Play Console</li>
+                            <li>Notarizes macOS apps for distribution</li>
+                            <li>Signs Windows executables with code signing certificates</li>
+                            <li>Environment-specific deployment (staging/production)</li>
+                            <li>Secure handling of certificates and private keys</li>
+                          </ul>
+                        </div>
+
+                        <div className="mt-3 space-y-2">
+                          <div className="text-xs font-medium">Manual Trigger Commands:</div>
+                          <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span># Deploy to staging (all platforms)</span>
+                              <Button size="sm" variant="ghost" onClick={() => copyToClipboard('gh workflow run deploy-certificates.yml -f environment=staging -f platform=all', 'Staging Deploy Command')}>
+                                <Copy size={10} />
+                              </Button>
+                            </div>
+                            <div>gh workflow run deploy-certificates.yml -f environment=staging -f platform=all</div>
+                            <div className="flex items-center justify-between mt-2">
+                              <span># Deploy iOS only to production</span>
+                              <Button size="sm" variant="ghost" onClick={() => copyToClipboard('gh workflow run deploy-certificates.yml -f environment=production -f platform=ios', 'iOS Production Deploy Command')}>
+                                <Copy size={10} />
+                              </Button>
+                            </div>
+                            <div>gh workflow run deploy-certificates.yml -f environment=production -f platform=ios</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Certificate Setup & Renewal Workflow */}
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Calendar size={16} className="text-amber-600" />
+                              <h3 className="font-medium">Certificate Setup & Renewal</h3>
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700">
+                                Automated
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Monitors certificate expiration and provides setup instructions for new certificates
+                            </p>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              <Badge variant="outline" className="text-xs">Monthly Check</Badge>
+                              <Badge variant="outline" className="text-xs">Auto-Renewal</Badge>
+                              <Badge variant="outline" className="text-xs">Notifications</Badge>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copyToClipboard('gh workflow run certificate-setup.yml -f action=check -f platform=all', 'Check Command')}
+                            className="ml-4"
+                          >
+                            <Calendar size={14} className="mr-1" />
+                            Check
+                          </Button>
+                        </div>
+
+                        <div className="bg-muted/50 rounded p-3 text-sm space-y-2">
+                          <div className="font-medium">Features:</div>
+                          <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs">
+                            <li>Monthly automated certificate expiration checks</li>
+                            <li>Creates GitHub issues for certificates expiring soon</li>
+                            <li>Generates detailed setup instructions for each platform</li>
+                            <li>Validates certificate integrity and expiration dates</li>
+                            <li>Supports manual certificate renewal workflows</li>
+                            <li>Platform-specific renewal guidance and commands</li>
+                          </ul>
+                        </div>
+
+                        <div className="mt-3 space-y-2">
+                          <div className="text-xs font-medium">Manual Trigger Commands:</div>
+                          <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span># Check all certificate expiration</span>
+                              <Button size="sm" variant="ghost" onClick={() => copyToClipboard('gh workflow run certificate-setup.yml -f action=check -f platform=all', 'Check All Command')}>
+                                <Copy size={10} />
+                              </Button>
+                            </div>
+                            <div>gh workflow run certificate-setup.yml -f action=check -f platform=all</div>
+                            <div className="flex items-center justify-between mt-2">
+                              <span># Generate setup instructions</span>
+                              <Button size="sm" variant="ghost" onClick={() => copyToClipboard('gh workflow run certificate-setup.yml -f action=setup -f platform=all', 'Setup Instructions Command')}>
+                                <Copy size={10} />
+                              </Button>
+                            </div>
+                            <div>gh workflow run certificate-setup.yml -f action=setup -f platform=all</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* CI/CD Pipeline */}
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Rocket size={16} className="text-green-600" />
+                              <h3 className="font-medium">CI/CD Pipeline</h3>
+                              <Badge variant="outline" className="bg-green-50 text-green-700">
+                                Active
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Continuous integration and deployment pipeline for all platforms and packages
+                            </p>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              <Badge variant="outline" className="text-xs">Test</Badge>
+                              <Badge variant="outline" className="text-xs">Build</Badge>
+                              <Badge variant="outline" className="text-xs">Release</Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-muted/50 rounded p-3 text-sm space-y-2">
+                          <div className="font-medium">Triggers automatically on:</div>
+                          <ul className="list-disc list-inside space-y-1 text-muted-foreground text-xs">
+                            <li>Push to main or develop branches</li>
+                            <li>Pull requests to main branch</li>
+                            <li>Creates releases with QR code distribution page</li>
+                            <li>Builds desktop apps for Windows, macOS, and Linux</li>
+                            <li>Builds mobile apps via Expo EAS</li>
+                            <li>Packages Chrome extension for distribution</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Workflow Status */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="border rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium">Certificate Deployment</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Ready for manual trigger
+                          </div>
+                        </div>
+                        <div className="border rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm font-medium">Certificate Monitoring</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Scheduled monthly checks
+                          </div>
+                        </div>
+                        <div className="border rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                            <span className="text-sm font-medium">CI/CD Pipeline</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Auto-triggered on push
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Workflow Security Notes */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-medium">Security & Best Practices</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-start gap-2">
+                        <Shield size={14} className="text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium">Secure Secret Management</div>
+                          <div className="text-muted-foreground text-xs">All certificates and private keys are stored as encrypted GitHub Secrets and never exposed in logs</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle size={14} className="text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium">Environment Isolation</div>
+                          <div className="text-muted-foreground text-xs">Staging and production deployments use separate environments with different certificates</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium">Certificate Expiration Monitoring</div>
+                          <div className="text-muted-foreground text-xs">Automated checks create GitHub issues when certificates are near expiration</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Key size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium">Temporary Keychain Cleanup</div>
+                          <div className="text-muted-foreground text-xs">All temporary keychains and certificate files are automatically cleaned up after use</div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

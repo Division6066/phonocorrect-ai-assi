@@ -1,0 +1,698 @@
+name: Certificate Setup & Renewal
+
+on:
+  schedule:
+    # Check certificate expiration monthly
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'check'
+        type: choice
+        options:
+          - check
+          - renew
+          - setup
+      platform:
+        description: 'Platform to process'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+          - macos
+          - windows
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  check-certificate-expiration:
+    name: Check Certificate Expiration
+    runs-on: ubuntu-latest
+    outputs:
+      ios-expires-soon: ${{ steps.check-ios.outputs.expires-soon }}
+      android-expires-soon: ${{ steps.check-android.outputs.expires-soon }}
+      macos-expires-soon: ${{ steps.check-macos.outputs.expires-soon }}
+      windows-expires-soon: ${{ steps.check-windows.outputs.expires-soon }}
+      summary: ${{ steps.summary.outputs.summary }}
+    steps:
+      - name: Check iOS Certificate Expiration
+        id: check-ios
+        if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios' || github.event_name == 'schedule'
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          if [[ -n "$APPLE_CERTIFICATE_P12_BASE64" ]]; then
+            # Decode certificate
+            echo "$APPLE_CERTIFICATE_P12_BASE64" | base64 -d > /tmp/ios_cert.p12
+            
+            # Extract certificate and check expiration
+            openssl pkcs12 -in /tmp/ios_cert.p12 -clcerts -nokeys -out /tmp/ios_cert.pem -passin pass:"$APPLE_CERTIFICATE_PASSWORD" 2>/dev/null
+            
+            if [[ -f /tmp/ios_cert.pem ]]; then
+              EXPIRY_DATE=$(openssl x509 -in /tmp/ios_cert.pem -noout -enddate | cut -d= -f2)
+              EXPIRY_TIMESTAMP=$(date -d "$EXPIRY_DATE" +%s 2>/dev/null || date -j -f "%b %d %H:%M:%S %Y %Z" "$EXPIRY_DATE" +%s 2>/dev/null || echo "0")
+              CURRENT_TIMESTAMP=$(date +%s)
+              DAYS_UNTIL_EXPIRY=$(( (EXPIRY_TIMESTAMP - CURRENT_TIMESTAMP) / 86400 ))
+              
+              echo "iOS certificate expires on: $EXPIRY_DATE"
+              echo "Days until expiry: $DAYS_UNTIL_EXPIRY"
+              
+              if [[ $DAYS_UNTIL_EXPIRY -le 30 ]]; then
+                echo "expires-soon=true" >> $GITHUB_OUTPUT
+                echo "iOS_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              else
+                echo "expires-soon=false" >> $GITHUB_OUTPUT
+                echo "iOS_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              fi
+            else
+              echo "expires-soon=unknown" >> $GITHUB_OUTPUT
+              echo "iOS_EXPIRY_DAYS=unknown" >> $GITHUB_ENV
+            fi
+            
+            # Clean up
+            rm -f /tmp/ios_cert.p12 /tmp/ios_cert.pem
+          else
+            echo "expires-soon=not-configured" >> $GITHUB_OUTPUT
+            echo "iOS_EXPIRY_DAYS=not-configured" >> $GITHUB_ENV
+          fi
+
+      - name: Check Android Certificate Expiration
+        id: check-android
+        if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android' || github.event_name == 'schedule'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [[ -n "$ANDROID_KEYSTORE_BASE64" ]]; then
+            # Decode keystore
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /tmp/android_keystore.jks
+            
+            # Check certificate expiration
+            EXPIRY_INFO=$(keytool -list -v -keystore /tmp/android_keystore.jks -alias "$ANDROID_KEY_ALIAS" -storepass "$ANDROID_KEYSTORE_PASSWORD" 2>/dev/null | grep "Valid until" || echo "")
+            
+            if [[ -n "$EXPIRY_INFO" ]]; then
+              EXPIRY_DATE=$(echo "$EXPIRY_INFO" | sed 's/.*Valid until: //' | sed 's/[[:space:]]*$//')
+              echo "Android certificate expires on: $EXPIRY_DATE"
+              
+              # Convert to timestamp (this is approximate, adjust format as needed)
+              EXPIRY_TIMESTAMP=$(date -d "$EXPIRY_DATE" +%s 2>/dev/null || echo "0")
+              CURRENT_TIMESTAMP=$(date +%s)
+              DAYS_UNTIL_EXPIRY=$(( (EXPIRY_TIMESTAMP - CURRENT_TIMESTAMP) / 86400 ))
+              
+              echo "Days until expiry: $DAYS_UNTIL_EXPIRY"
+              
+              if [[ $DAYS_UNTIL_EXPIRY -le 365 ]]; then
+                echo "expires-soon=true" >> $GITHUB_OUTPUT
+                echo "ANDROID_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              else
+                echo "expires-soon=false" >> $GITHUB_OUTPUT
+                echo "ANDROID_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              fi
+            else
+              echo "expires-soon=unknown" >> $GITHUB_OUTPUT
+              echo "ANDROID_EXPIRY_DAYS=unknown" >> $GITHUB_ENV
+            fi
+            
+            # Clean up
+            rm -f /tmp/android_keystore.jks
+          else
+            echo "expires-soon=not-configured" >> $GITHUB_OUTPUT
+            echo "ANDROID_EXPIRY_DAYS=not-configured" >> $GITHUB_ENV
+          fi
+
+      - name: Check macOS Certificate Expiration
+        id: check-macos
+        if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'macos' || github.event_name == 'schedule'
+        env:
+          APPLE_DEVELOPER_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          APPLE_DEVELOPER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+        run: |
+          if [[ -n "$APPLE_DEVELOPER_CERTIFICATE_P12_BASE64" ]]; then
+            # Decode certificate
+            echo "$APPLE_DEVELOPER_CERTIFICATE_P12_BASE64" | base64 -d > /tmp/macos_cert.p12
+            
+            # Extract certificate and check expiration
+            openssl pkcs12 -in /tmp/macos_cert.p12 -clcerts -nokeys -out /tmp/macos_cert.pem -passin pass:"$APPLE_DEVELOPER_CERTIFICATE_PASSWORD" 2>/dev/null
+            
+            if [[ -f /tmp/macos_cert.pem ]]; then
+              EXPIRY_DATE=$(openssl x509 -in /tmp/macos_cert.pem -noout -enddate | cut -d= -f2)
+              EXPIRY_TIMESTAMP=$(date -d "$EXPIRY_DATE" +%s 2>/dev/null || date -j -f "%b %d %H:%M:%S %Y %Z" "$EXPIRY_DATE" +%s 2>/dev/null || echo "0")
+              CURRENT_TIMESTAMP=$(date +%s)
+              DAYS_UNTIL_EXPIRY=$(( (EXPIRY_TIMESTAMP - CURRENT_TIMESTAMP) / 86400 ))
+              
+              echo "macOS certificate expires on: $EXPIRY_DATE"
+              echo "Days until expiry: $DAYS_UNTIL_EXPIRY"
+              
+              if [[ $DAYS_UNTIL_EXPIRY -le 30 ]]; then
+                echo "expires-soon=true" >> $GITHUB_OUTPUT
+                echo "MACOS_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              else
+                echo "expires-soon=false" >> $GITHUB_OUTPUT
+                echo "MACOS_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              fi
+            else
+              echo "expires-soon=unknown" >> $GITHUB_OUTPUT
+              echo "MACOS_EXPIRY_DAYS=unknown" >> $GITHUB_ENV
+            fi
+            
+            # Clean up
+            rm -f /tmp/macos_cert.p12 /tmp/macos_cert.pem
+          else
+            echo "expires-soon=not-configured" >> $GITHUB_OUTPUT
+            echo "MACOS_EXPIRY_DAYS=not-configured" >> $GITHUB_ENV
+          fi
+
+      - name: Check Windows Certificate Expiration
+        id: check-windows
+        if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows' || github.event_name == 'schedule'
+        env:
+          WINDOWS_CERTIFICATE_P12_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_P12_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [[ -n "$WINDOWS_CERTIFICATE_P12_BASE64" ]]; then
+            # Decode certificate
+            echo "$WINDOWS_CERTIFICATE_P12_BASE64" | base64 -d > /tmp/windows_cert.p12
+            
+            # Extract certificate and check expiration
+            openssl pkcs12 -in /tmp/windows_cert.p12 -clcerts -nokeys -out /tmp/windows_cert.pem -passin pass:"$WINDOWS_CERTIFICATE_PASSWORD" 2>/dev/null
+            
+            if [[ -f /tmp/windows_cert.pem ]]; then
+              EXPIRY_DATE=$(openssl x509 -in /tmp/windows_cert.pem -noout -enddate | cut -d= -f2)
+              EXPIRY_TIMESTAMP=$(date -d "$EXPIRY_DATE" +%s 2>/dev/null || echo "0")
+              CURRENT_TIMESTAMP=$(date +%s)
+              DAYS_UNTIL_EXPIRY=$(( (EXPIRY_TIMESTAMP - CURRENT_TIMESTAMP) / 86400 ))
+              
+              echo "Windows certificate expires on: $EXPIRY_DATE"
+              echo "Days until expiry: $DAYS_UNTIL_EXPIRY"
+              
+              if [[ $DAYS_UNTIL_EXPIRY -le 60 ]]; then
+                echo "expires-soon=true" >> $GITHUB_OUTPUT
+                echo "WINDOWS_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              else
+                echo "expires-soon=false" >> $GITHUB_OUTPUT
+                echo "WINDOWS_EXPIRY_DAYS=$DAYS_UNTIL_EXPIRY" >> $GITHUB_ENV
+              fi
+            else
+              echo "expires-soon=unknown" >> $GITHUB_OUTPUT
+              echo "WINDOWS_EXPIRY_DAYS=unknown" >> $GITHUB_ENV
+            fi
+            
+            # Clean up
+            rm -f /tmp/windows_cert.p12 /tmp/windows_cert.pem
+          else
+            echo "expires-soon=not-configured" >> $GITHUB_OUTPUT
+            echo "WINDOWS_EXPIRY_DAYS=not-configured" >> $GITHUB_ENV
+          fi
+
+      - name: Generate Summary
+        id: summary
+        run: |
+          echo "## 📋 Certificate Expiration Report" > /tmp/summary.md
+          echo "" >> /tmp/summary.md
+          echo "**Check Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> /tmp/summary.md
+          echo "" >> /tmp/summary.md
+          echo "### Certificate Status" >> /tmp/summary.md
+          echo "" >> /tmp/summary.md
+          
+          # iOS Status
+          if [[ "${{ env.iOS_EXPIRY_DAYS }}" == "not-configured" ]]; then
+            echo "- 🔒 **iOS**: Not configured" >> /tmp/summary.md
+          elif [[ "${{ env.iOS_EXPIRY_DAYS }}" == "unknown" ]]; then
+            echo "- ❓ **iOS**: Cannot determine expiration" >> /tmp/summary.md
+          elif [[ ${{ env.iOS_EXPIRY_DAYS }} -le 7 ]]; then
+            echo "- 🚨 **iOS**: Expires in ${{ env.iOS_EXPIRY_DAYS }} days (URGENT)" >> /tmp/summary.md
+          elif [[ ${{ env.iOS_EXPIRY_DAYS }} -le 30 ]]; then
+            echo "- ⚠️ **iOS**: Expires in ${{ env.iOS_EXPIRY_DAYS }} days (renewal needed)" >> /tmp/summary.md
+          else
+            echo "- ✅ **iOS**: Valid for ${{ env.iOS_EXPIRY_DAYS }} days" >> /tmp/summary.md
+          fi
+          
+          # Android Status
+          if [[ "${{ env.ANDROID_EXPIRY_DAYS }}" == "not-configured" ]]; then
+            echo "- 🔒 **Android**: Not configured" >> /tmp/summary.md
+          elif [[ "${{ env.ANDROID_EXPIRY_DAYS }}" == "unknown" ]]; then
+            echo "- ❓ **Android**: Cannot determine expiration" >> /tmp/summary.md
+          elif [[ ${{ env.ANDROID_EXPIRY_DAYS }} -le 90 ]]; then
+            echo "- 🚨 **Android**: Expires in ${{ env.ANDROID_EXPIRY_DAYS }} days (renewal needed)" >> /tmp/summary.md
+          elif [[ ${{ env.ANDROID_EXPIRY_DAYS }} -le 365 ]]; then
+            echo "- ⚠️ **Android**: Expires in ${{ env.ANDROID_EXPIRY_DAYS }} days" >> /tmp/summary.md
+          else
+            echo "- ✅ **Android**: Valid for ${{ env.ANDROID_EXPIRY_DAYS }} days" >> /tmp/summary.md
+          fi
+          
+          # macOS Status
+          if [[ "${{ env.MACOS_EXPIRY_DAYS }}" == "not-configured" ]]; then
+            echo "- 🔒 **macOS**: Not configured" >> /tmp/summary.md
+          elif [[ "${{ env.MACOS_EXPIRY_DAYS }}" == "unknown" ]]; then
+            echo "- ❓ **macOS**: Cannot determine expiration" >> /tmp/summary.md
+          elif [[ ${{ env.MACOS_EXPIRY_DAYS }} -le 7 ]]; then
+            echo "- 🚨 **macOS**: Expires in ${{ env.MACOS_EXPIRY_DAYS }} days (URGENT)" >> /tmp/summary.md
+          elif [[ ${{ env.MACOS_EXPIRY_DAYS }} -le 30 ]]; then
+            echo "- ⚠️ **macOS**: Expires in ${{ env.MACOS_EXPIRY_DAYS }} days (renewal needed)" >> /tmp/summary.md
+          else
+            echo "- ✅ **macOS**: Valid for ${{ env.MACOS_EXPIRY_DAYS }} days" >> /tmp/summary.md
+          fi
+          
+          # Windows Status
+          if [[ "${{ env.WINDOWS_EXPIRY_DAYS }}" == "not-configured" ]]; then
+            echo "- 🔒 **Windows**: Not configured" >> /tmp/summary.md
+          elif [[ "${{ env.WINDOWS_EXPIRY_DAYS }}" == "unknown" ]]; then
+            echo "- ❓ **Windows**: Cannot determine expiration" >> /tmp/summary.md
+          elif [[ ${{ env.WINDOWS_EXPIRY_DAYS }} -le 30 ]]; then
+            echo "- 🚨 **Windows**: Expires in ${{ env.WINDOWS_EXPIRY_DAYS }} days (renewal needed)" >> /tmp/summary.md
+          elif [[ ${{ env.WINDOWS_EXPIRY_DAYS }} -le 60 ]]; then
+            echo "- ⚠️ **Windows**: Expires in ${{ env.WINDOWS_EXPIRY_DAYS }} days" >> /tmp/summary.md
+          else
+            echo "- ✅ **Windows**: Valid for ${{ env.WINDOWS_EXPIRY_DAYS }} days" >> /tmp/summary.md
+          fi
+          
+          echo "" >> /tmp/summary.md
+          echo "### Next Actions" >> /tmp/summary.md
+          echo "" >> /tmp/summary.md
+          echo "- 🔄 Run certificate renewal workflow if any expire soon" >> /tmp/summary.md
+          echo "- 📧 Contact your developer account administrator for renewals" >> /tmp/summary.md
+          echo "- 🗓️ Set calendar reminders for certificate renewals" >> /tmp/summary.md
+          
+          # Set output for use in other jobs
+          SUMMARY_CONTENT=$(cat /tmp/summary.md)
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  generate-setup-instructions:
+    name: Generate Setup Instructions
+    if: github.event.inputs.action == 'setup'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate setup instructions
+        run: |
+          mkdir -p certificate-setup
+          
+          # iOS Setup Instructions
+          cat > certificate-setup/ios-setup.md << 'EOF'
+          # iOS Certificate Setup Instructions
+          
+          ## Prerequisites
+          - Apple Developer Account ($99/year)
+          - Xcode installed on macOS
+          - Admin access to this GitHub repository
+          
+          ## Step 1: Generate Certificate Signing Request (CSR)
+          ```bash
+          openssl req -new -newkey rsa:2048 -nodes \
+            -keyout ios_dev.key -out ios_dev.csr \
+            -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=YourName"
+          ```
+          
+          ## Step 2: Create Certificate in Apple Developer Portal
+          1. Log in to [Apple Developer Portal](https://developer.apple.com/account/)
+          2. Go to Certificates, Identifiers & Profiles
+          3. Click the "+" button to create a new certificate
+          4. Choose "iOS App Development" or "iOS Distribution"
+          5. Upload your CSR file
+          6. Download the certificate (.cer file)
+          
+          ## Step 3: Create P12 Certificate
+          ```bash
+          # Convert .cer to .pem
+          openssl x509 -in ios_distribution.cer -inform DER -out ios_distribution.pem -outform PEM
+          
+          # Create P12 bundle
+          openssl pkcs12 -export -out ios_certificate.p12 \
+            -inkey ios_dev.key -in ios_distribution.pem \
+            -password pass:YourP12Password
+          ```
+          
+          ## Step 4: Encode Certificate for GitHub Secrets
+          ```bash
+          base64 -i ios_certificate.p12 | tr -d '\n' > ios_certificate_base64.txt
+          ```
+          
+          ## Step 5: Create Provisioning Profile
+          1. In Apple Developer Portal, go to Profiles
+          2. Click "+" to create new profile
+          3. Choose "iOS App Development" or "Ad Hoc"
+          4. Select your App ID and certificates
+          5. Download the profile (.mobileprovision file)
+          6. Encode it: `base64 -i profile.mobileprovision | tr -d '\n'`
+          
+          ## Step 6: Add GitHub Secrets
+          Add these secrets to your GitHub repository:
+          - `APPLE_CERTIFICATE_P12_BASE64`: Content of ios_certificate_base64.txt
+          - `APPLE_CERTIFICATE_PASSWORD`: Your P12 password
+          - `APPLE_PROVISIONING_PROFILE_BASE64`: Base64 encoded .mobileprovision
+          - `APPLE_TEAM_ID`: Your Apple Developer Team ID
+          - `APPLE_CODE_SIGN_IDENTITY`: Certificate name (e.g., "iPhone Distribution: Your Name")
+          - `APPLE_PROVISIONING_PROFILE_NAME`: Profile name from Apple Developer Portal
+          - `APPLE_ID_USERNAME`: Your Apple ID email
+          - `APPLE_ID_PASSWORD`: App-specific password (not your Apple ID password)
+          
+          ## Security Notes
+          - Store private keys securely and never commit them
+          - Use app-specific passwords for Apple ID authentication
+          - Certificates expire after 1 year and need renewal
+          EOF
+          
+          # Android Setup Instructions
+          cat > certificate-setup/android-setup.md << 'EOF'
+          # Android Certificate Setup Instructions
+          
+          ## Prerequisites
+          - Google Play Console Account ($25 one-time fee)
+          - Java Development Kit (JDK) installed
+          - Admin access to this GitHub repository
+          
+          ## Step 1: Generate Android Signing Key
+          ```bash
+          keytool -genkey -v -keystore phonocorrect-release-key.keystore \
+            -alias phonocorrect-key-alias \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass YourKeystorePassword \
+            -keypass YourKeyPassword
+          ```
+          
+          **Important:** Answer the prompts with your organization details. Use the same password for both store and key for simplicity.
+          
+          ## Step 2: Verify the Keystore
+          ```bash
+          keytool -list -v -keystore phonocorrect-release-key.keystore \
+            -alias phonocorrect-key-alias -storepass YourKeystorePassword
+          ```
+          
+          ## Step 3: Encode Keystore for GitHub Secrets
+          ```bash
+          base64 -i phonocorrect-release-key.keystore | tr -d '\n' > keystore_base64.txt
+          ```
+          
+          ## Step 4: Google Play Console Setup
+          1. Log in to [Google Play Console](https://play.google.com/console/)
+          2. Create a new app or select existing app
+          3. Go to Setup → App Signing
+          4. Choose "Upload your own signing key"
+          5. Upload your keystore or follow Google's instructions
+          
+          ## Step 5: Add GitHub Secrets
+          Add these secrets to your GitHub repository:
+          - `ANDROID_KEYSTORE_BASE64`: Content of keystore_base64.txt
+          - `ANDROID_KEYSTORE_PASSWORD`: Your keystore password
+          - `ANDROID_KEY_ALIAS`: phonocorrect-key-alias
+          - `ANDROID_KEY_PASSWORD`: Your key password
+          - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`: Service account JSON for Play Store API
+          
+          ## Step 6: Create Service Account (Optional for automated uploads)
+          1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+          2. Create or select a project
+          3. Enable Google Play Android Developer API
+          4. Create Service Account with Play Console Developer role
+          5. Download JSON key file
+          6. In Play Console, add the service account email to Users & Permissions
+          
+          ## Security Notes
+          - Backup your keystore file securely - losing it means you cannot update your app
+          - Use strong passwords for keystore and key
+          - Android keystores are valid for 25+ years by default
+          - Consider using Google Play App Signing for additional security
+          EOF
+          
+          # macOS Setup Instructions  
+          cat > certificate-setup/macos-setup.md << 'EOF'
+          # macOS Certificate Setup Instructions
+          
+          ## Prerequisites
+          - Apple Developer Account ($99/year)
+          - macOS machine with Xcode
+          - Admin access to this GitHub repository
+          
+          ## Step 1: Generate Certificate Signing Request
+          ```bash
+          openssl req -new -newkey rsa:2048 -nodes \
+            -keyout macos_dev.key -out macos_dev.csr \
+            -subj "/C=US/ST=YourState/L=YourCity/O=YourOrganization/CN=YourName"
+          ```
+          
+          ## Step 2: Create Developer ID Certificate
+          1. Log in to [Apple Developer Portal](https://developer.apple.com/account/)
+          2. Go to Certificates, Identifiers & Profiles
+          3. Click "+" to create new certificate
+          4. Choose "Developer ID Application" (for distribution outside Mac App Store)
+          5. Upload your CSR file
+          6. Download the certificate (.cer file)
+          
+          ## Step 3: Create P12 Certificate
+          ```bash
+          # Convert .cer to .pem
+          openssl x509 -in DeveloperID_Application.cer -inform DER -out DeveloperID_Application.pem -outform PEM
+          
+          # Create P12 bundle
+          openssl pkcs12 -export -out macos_certificate.p12 \
+            -inkey macos_dev.key -in DeveloperID_Application.pem \
+            -password pass:YourP12Password
+          ```
+          
+          ## Step 4: Encode Certificate for GitHub Secrets
+          ```bash
+          base64 -i macos_certificate.p12 | tr -d '\n' > macos_certificate_base64.txt
+          ```
+          
+          ## Step 5: Set Up Notarization
+          1. Go to [Apple ID Account](https://appleid.apple.com/)
+          2. Generate an App-Specific Password for notarization
+          3. Note your Team ID from Apple Developer Portal
+          
+          ## Step 6: Add GitHub Secrets
+          Add these secrets to your GitHub repository:
+          - `APPLE_DEVELOPER_CERTIFICATE_P12_BASE64`: Content of macos_certificate_base64.txt
+          - `APPLE_DEVELOPER_CERTIFICATE_PASSWORD`: Your P12 password
+          - `APPLE_DEVELOPER_IDENTITY`: Certificate name (e.g., "Developer ID Application: Your Name (TEAMID)")
+          - `APPLE_ID_USERNAME`: Your Apple ID email
+          - `APPLE_NOTARIZATION_PASSWORD`: App-specific password
+          - `APPLE_TEAM_ID`: Your 10-character Team ID
+          - `KEYCHAIN_PASSWORD`: Random password for temporary keychain
+          
+          ## Security Notes
+          - Never use your actual Apple ID password in CI/CD
+          - Generate app-specific passwords for automated processes
+          - Developer ID certificates are valid for 5 years
+          - Notarization requires internet connection during signing
+          EOF
+          
+          # Windows Setup Instructions
+          cat > certificate-setup/windows-setup.md << 'EOF'
+          # Windows Certificate Setup Instructions
+          
+          ## Prerequisites
+          - Windows Code Signing Certificate (from trusted CA like DigiCert, Sectigo, etc.)
+          - Windows machine or Windows runner
+          - Admin access to this GitHub repository
+          
+          ## Option 1: Purchase from Certificate Authority
+          
+          ### Popular Certificate Authorities:
+          - **DigiCert**: Industry standard, $474/year
+          - **Sectigo (formerly Comodo)**: Cost-effective, $179/year  
+          - **GlobalSign**: Trusted, $249/year
+          - **SSL.com**: Budget option, $169/year
+          
+          ### Steps:
+          1. Choose a Certificate Authority
+          2. Purchase "Code Signing Certificate"
+          3. Complete organization validation process
+          4. Generate CSR and private key
+          5. Download certificate files
+          
+          ## Option 2: Self-Signed Certificate (Development Only)
+          
+          **Warning:** Self-signed certificates will show security warnings to users.
+          
+          ```powershell
+          # Generate self-signed certificate
+          $cert = New-SelfSignedCertificate -Subject "CN=YourOrganization" `
+            -Type CodeSigning -KeyUsage DigitalSignature `
+            -FriendlyName "YourApp Code Signing" `
+            -NotAfter (Get-Date).AddYears(3) `
+            -CertStoreLocation "Cert:\CurrentUser\My"
+          
+          # Export to PFX
+          $password = ConvertTo-SecureString -String "YourPassword" -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath "windows_certificate.pfx" -Password $password
+          ```
+          
+          ## Step 3: Encode Certificate for GitHub Secrets
+          ```bash
+          # On Linux/macOS
+          base64 -i windows_certificate.pfx | tr -d '\n' > windows_certificate_base64.txt
+          
+          # On Windows
+          [Convert]::ToBase64String([IO.File]::ReadAllBytes("windows_certificate.pfx")) | Out-File -Encoding ASCII windows_certificate_base64.txt
+          ```
+          
+          ## Step 4: Add GitHub Secrets
+          Add these secrets to your GitHub repository:
+          - `WINDOWS_CERTIFICATE_P12_BASE64`: Content of windows_certificate_base64.txt
+          - `WINDOWS_CERTIFICATE_PASSWORD`: Your certificate password
+          
+          ## Step 5: Configure Timestamp Server
+          The workflow uses DigiCert's timestamp server by default:
+          - `http://timestamp.digicert.com`
+          
+          Alternative timestamp servers:
+          - `http://time.certum.pl`
+          - `http://timestamp.comodoca.com`
+          - `http://tsa.starfieldtech.com`
+          
+          ## Security Notes
+          - Code signing certificates typically cost $200-500/year
+          - Extended Validation (EV) certificates provide better trust
+          - Certificates are usually valid for 1-3 years
+          - Organization validation is required for commercial certificates
+          - Self-signed certificates should only be used for development
+          EOF
+          
+          echo "📋 Certificate setup instructions generated in certificate-setup/ directory"
+
+      - name: Upload setup instructions
+        uses: actions/upload-artifact@v3
+        with:
+          name: certificate-setup-instructions
+          path: certificate-setup/
+
+  create-renewal-issue:
+    name: Create Renewal Issue
+    needs: check-certificate-expiration
+    if: |
+      needs.check-certificate-expiration.outputs.ios-expires-soon == 'true' ||
+      needs.check-certificate-expiration.outputs.android-expires-soon == 'true' ||
+      needs.check-certificate-expiration.outputs.macos-expires-soon == 'true' ||
+      needs.check-certificate-expiration.outputs.windows-expires-soon == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Issue for Certificate Renewal
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            
+            // Check if renewal issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              labels: ['certificate-renewal'],
+              state: 'open'
+            });
+            
+            if (issues.data.length === 0) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: '🔐 Certificate Renewal Required',
+                labels: ['certificate-renewal', 'priority-high'],
+                body: `${{ needs.check-certificate-expiration.outputs.summary }}
+            
+            ## 🚨 Action Required
+            
+            One or more certificates are expiring soon and need renewal.
+            
+            ### Immediate Steps:
+            1. Review the certificate status above
+            2. Contact your developer account administrator
+            3. Follow the renewal process for each platform
+            4. Update GitHub Secrets with new certificates
+            5. Run the certificate deployment workflow to test
+            
+            ### Renewal Resources:
+            - **iOS/macOS**: [Apple Developer Portal](https://developer.apple.com/account/)
+            - **Android**: [Google Play Console](https://play.google.com/console/)
+            - **Windows**: Contact your Certificate Authority
+            
+            ### After Renewal:
+            1. Update the corresponding GitHub Secrets
+            2. Run this workflow again to verify: \`gh workflow run certificate-setup.yml\`
+            3. Test the deployment workflow: \`gh workflow run deploy-certificates.yml\`
+            
+            ---
+            
+            **This issue was automatically created by the Certificate Setup & Renewal workflow.**
+            **Close this issue once all certificates have been renewed and tested.**`
+              });
+            } else {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issues.data[0].number,
+                body: `## 📅 Updated Certificate Status Report
+            
+            ${{ needs.check-certificate-expiration.outputs.summary }}
+            
+            **Report generated:** ${new Date().toISOString()}`
+              });
+            }
+
+  notify-expiration:
+    name: Notify Certificate Expiration
+    needs: check-certificate-expiration
+    if: |
+      always() && 
+      (needs.check-certificate-expiration.outputs.ios-expires-soon == 'true' ||
+       needs.check-certificate-expiration.outputs.android-expires-soon == 'true' ||
+       needs.check-certificate-expiration.outputs.macos-expires-soon == 'true' ||
+       needs.check-certificate-expiration.outputs.windows-expires-soon == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification summary
+        run: |
+          echo "## 🔔 Certificate Expiration Notification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{ needs.check-certificate-expiration.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📧 Notifications Sent" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GitHub Issue created/updated" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Workflow summary updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚡ Quick Actions" >> $GITHUB_STEP_SUMMARY
+          echo "- [Renew Certificates Workflow](../../actions/workflows/certificate-setup.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Deploy Certificates Workflow](../../actions/workflows/deploy-certificates.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Open Issues](../../issues?q=is%3Aissue+is%3Aopen+label%3Acertificate-renewal)" >> $GITHUB_STEP_SUMMARY
+
+  summary:
+    name: Certificate Management Summary
+    needs: [check-certificate-expiration, generate-setup-instructions]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate final summary
+        run: |
+          echo "## 🔐 Certificate Management Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** ${{ github.event.inputs.action || 'scheduled check' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platform:** ${{ github.event.inputs.platform || 'all' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.check-certificate-expiration.result }}" == "success" ]]; then
+            echo "${{ needs.check-certificate-expiration.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛠️ Available Resources" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.generate-setup-instructions.result }}" == "success" ]]; then
+            echo "- 📋 [Setup Instructions](../../actions/runs/${{ github.run_id }}#artifacts) (download artifacts)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "- 🚀 [Deploy Certificates](../../actions/workflows/deploy-certificates.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 [Check Certificates](../../actions/workflows/certificate-setup.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📖 [Documentation](../../blob/main/docs/certificate-management.md)" >> $GITHUB_STEP_SUMMARY

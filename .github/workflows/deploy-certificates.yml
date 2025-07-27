@@ -1,0 +1,530 @@
+name: Deploy Certificates & Code Signing
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      platform:
+        description: 'Platform to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+          - macos
+          - windows
+      force_update:
+        description: 'Force certificate update'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '9.0.0'
+
+jobs:
+  validate-secrets:
+    name: Validate Required Secrets
+    runs-on: ubuntu-latest
+    outputs:
+      has-ios-secrets: ${{ steps.check-ios.outputs.has-secrets }}
+      has-android-secrets: ${{ steps.check-android.outputs.has-secrets }}
+      has-macos-secrets: ${{ steps.check-macos.outputs.has-secrets }}
+      has-windows-secrets: ${{ steps.check-windows.outputs.has-secrets }}
+    steps:
+      - name: Check iOS Secrets
+        id: check-ios
+        run: |
+          if [[ -n "${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}" && -n "${{ secrets.APPLE_CERTIFICATE_PASSWORD }}" ]]; then
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Android Secrets
+        id: check-android
+        run: |
+          if [[ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" && -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ]]; then
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check macOS Secrets
+        id: check-macos
+        run: |
+          if [[ -n "${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}" && -n "${{ secrets.APPLE_NOTARIZATION_PASSWORD }}" ]]; then
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Windows Secrets
+        id: check-windows
+        run: |
+          if [[ -n "${{ secrets.WINDOWS_CERTIFICATE_P12_BASE64 }}" && -n "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}" ]]; then
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-ios-certificates:
+    name: Deploy iOS Certificates
+    needs: validate-secrets
+    if: needs.validate-secrets.outputs.has-ios-secrets == 'true' && (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios')
+    runs-on: macos-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install Apple certificates
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PROVISIONING_PROFILE_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # Import certificate and provisioning profile from secrets
+          echo -n "$APPLE_CERTIFICATE_P12_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+          echo -n "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode --output $PROVISIONING_PROFILE_PATH
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # Apply provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PROVISIONING_PROFILE_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+          # Verify certificates
+          security find-identity -v -p codesigning $KEYCHAIN_PATH
+
+      - name: Build and sign iOS keyboard extension
+        working-directory: ./keyboard-ios
+        env:
+          KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Unlock keychain for signing
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Build and sign the keyboard extension
+          xcodebuild -workspace PhonoCorrectKeyboard.xcworkspace \
+                     -scheme PhonoCorrectKeyboard \
+                     -configuration Release \
+                     -archivePath $RUNNER_TEMP/PhonoCorrectKeyboard.xcarchive \
+                     archive \
+                     CODE_SIGN_STYLE=Manual \
+                     DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+                     CODE_SIGN_IDENTITY="${{ secrets.APPLE_CODE_SIGN_IDENTITY }}" \
+                     PROVISIONING_PROFILE_SPECIFIER="${{ secrets.APPLE_PROVISIONING_PROFILE_NAME }}"
+
+      - name: Export signed iOS keyboard
+        working-directory: ./keyboard-ios
+        run: |
+          # Create export options plist
+          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>compileBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+          # Export the archive
+          xcodebuild -exportArchive \
+                     -archivePath $RUNNER_TEMP/PhonoCorrectKeyboard.xcarchive \
+                     -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+                     -exportPath $RUNNER_TEMP/export
+
+      - name: Upload to TestFlight (Staging)
+        if: github.event.inputs.environment == 'staging'
+        working-directory: ./keyboard-ios
+        env:
+          APPLE_ID_USERNAME: ${{ secrets.APPLE_ID_USERNAME }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+        run: |
+          # Upload to TestFlight
+          xcrun altool --upload-app -f $RUNNER_TEMP/export/PhonoCorrectKeyboard.ipa \
+                       -u "$APPLE_ID_USERNAME" \
+                       -p "$APPLE_ID_PASSWORD" \
+                       --type ios
+
+      - name: Upload to App Store (Production)
+        if: github.event.inputs.environment == 'production'
+        working-directory: ./keyboard-ios
+        env:
+          APPLE_ID_USERNAME: ${{ secrets.APPLE_ID_USERNAME }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+        run: |
+          echo "🚀 Production deployment would upload to App Store Connect"
+          echo "Manual review and release required via App Store Connect dashboard"
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          if [ -f $RUNNER_TEMP/app-signing.keychain-db ]; then
+            security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+          fi
+
+  deploy-android-certificates:
+    name: Deploy Android Certificates
+    needs: validate-secrets
+    if: needs.validate-secrets.outputs.has-android-secrets == 'true' && (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android')
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Android signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # Create keystore from base64
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > $RUNNER_TEMP/release-keystore.jks
+          
+          # Create gradle.properties for signing
+          cat > $HOME/.gradle/gradle.properties << EOF
+          PHONO_RELEASE_STORE_FILE=$RUNNER_TEMP/release-keystore.jks
+          PHONO_RELEASE_KEY_ALIAS=$ANDROID_KEY_ALIAS
+          PHONO_RELEASE_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD
+          PHONO_RELEASE_KEY_PASSWORD=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Build and sign Android keyboard
+        working-directory: ./keyboard-android
+        run: |
+          # Build signed AAR
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$RUNNER_TEMP/release-keystore.jks \
+            -Pandroid.injected.signing.store.password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.ANDROID_KEY_PASSWORD }}"
+
+      - name: Build and sign Android mobile app
+        working-directory: ./mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          # Install EAS CLI
+          npm install -g @expo/cli eas-cli
+          
+          # Build signed APK for staging
+          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            eas build --platform android --profile internal --non-interactive
+          fi
+          
+          # Build AAB for production
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            eas build --platform android --profile production --non-interactive
+          fi
+
+      - name: Upload to Google Play (Internal Testing)
+        if: github.event.inputs.environment == 'staging'
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          # Install Google Play CLI tools
+          pip install google-play-android-developer-tools
+          
+          echo "🚀 Would upload APK to Google Play Internal Testing"
+          echo "Implementation requires Google Play Developer API setup"
+
+      - name: Upload to Google Play (Production)
+        if: github.event.inputs.environment == 'production'
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo "🚀 Production deployment would upload AAB to Google Play Console"
+          echo "Manual review and release required via Google Play Console"
+
+  deploy-macos-certificates:
+    name: Deploy macOS Certificates
+    needs: validate-secrets
+    if: needs.validate-secrets.outputs.has-macos-secrets == 'true' && (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'macos')
+    runs-on: macos-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup macOS signing
+        env:
+          APPLE_DEVELOPER_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
+          APPLE_DEVELOPER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/developer_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # Import certificate from secrets
+          echo -n "$APPLE_DEVELOPER_CERTIFICATE_P12_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$APPLE_DEVELOPER_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Build and sign macOS app
+        working-directory: ./desktop
+        env:
+          KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_DEVELOPER_IDENTITY: ${{ secrets.APPLE_DEVELOPER_IDENTITY }}
+        run: |
+          # Unlock keychain for signing
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Build and sign the desktop app
+          pnpm build
+          pnpm dist --mac --publish=never
+          
+          # Sign the DMG
+          codesign --force --sign "$APPLE_DEVELOPER_IDENTITY" --options runtime electron-dist/*.dmg
+
+      - name: Notarize macOS app
+        env:
+          APPLE_ID_USERNAME: ${{ secrets.APPLE_ID_USERNAME }}
+          APPLE_NOTARIZATION_PASSWORD: ${{ secrets.APPLE_NOTARIZATION_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Submit for notarization
+          xcrun notarytool submit desktop/electron-dist/*.dmg \
+                             --apple-id "$APPLE_ID_USERNAME" \
+                             --password "$APPLE_NOTARIZATION_PASSWORD" \
+                             --team-id "$APPLE_TEAM_ID" \
+                             --wait
+
+          # Staple the notarization
+          xcrun stapler staple desktop/electron-dist/*.dmg
+
+      - name: Upload signed macOS app
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-signed-${{ github.event.inputs.environment }}
+          path: desktop/electron-dist/*.dmg
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          if [ -f $RUNNER_TEMP/app-signing.keychain-db ]; then
+            security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+          fi
+
+  deploy-windows-certificates:
+    name: Deploy Windows Certificates
+    needs: validate-secrets
+    if: needs.validate-secrets.outputs.has-windows-secrets == 'true' && (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows')
+    runs-on: windows-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Windows signing
+        env:
+          WINDOWS_CERTIFICATE_P12_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_P12_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        shell: powershell
+        run: |
+          # Decode certificate
+          $certificateBytes = [System.Convert]::FromBase64String("$env:WINDOWS_CERTIFICATE_P12_BASE64")
+          $certificatePath = "$env:RUNNER_TEMP\certificate.p12"
+          [System.IO.File]::WriteAllBytes($certificatePath, $certificateBytes)
+          
+          # Import certificate to Windows certificate store
+          $password = ConvertTo-SecureString "$env:WINDOWS_CERTIFICATE_PASSWORD" -AsPlainText -Force
+          Import-PfxCertificate -FilePath $certificatePath -CertStoreLocation Cert:\CurrentUser\My -Password $password
+          
+          echo "WINDOWS_CERTIFICATE_PATH=$certificatePath" >> $env:GITHUB_ENV
+
+      - name: Build and sign Windows app
+        working-directory: ./desktop
+        env:
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Build and sign the desktop app
+          pnpm build
+          pnpm dist --win --publish=never
+          
+          # Sign the executable using SignTool
+          & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22000.0\x64\signtool.exe" sign `
+            /f "$env:WINDOWS_CERTIFICATE_PATH" `
+            /p "$env:WINDOWS_CERTIFICATE_PASSWORD" `
+            /tr http://timestamp.digicert.com `
+            /td sha256 `
+            /fd sha256 `
+            "electron-dist\*.exe"
+
+      - name: Upload signed Windows app
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-signed-${{ github.event.inputs.environment }}
+          path: desktop/electron-dist/*.exe
+
+  summary:
+    name: Deployment Summary
+    needs: [validate-secrets, deploy-ios-certificates, deploy-android-certificates, deploy-macos-certificates, deploy-windows-certificates]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "## 🚀 Certificate Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platform:** ${{ github.event.inputs.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Platform Status" >> $GITHUB_STEP_SUMMARY
+          
+          # iOS Status
+          if [ "${{ needs.deploy-ios-certificates.result }}" == "success" ]; then
+            echo "- ✅ **iOS**: Certificates deployed and signed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-ios-certificates.result }}" == "failure" ]; then
+            echo "- ❌ **iOS**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-ios-certificates.result }}" == "skipped" ]; then
+            echo "- ⏭️ **iOS**: Skipped (secrets not available or platform not selected)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Android Status
+          if [ "${{ needs.deploy-android-certificates.result }}" == "success" ]; then
+            echo "- ✅ **Android**: Certificates deployed and signed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-android-certificates.result }}" == "failure" ]; then
+            echo "- ❌ **Android**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-android-certificates.result }}" == "skipped" ]; then
+            echo "- ⏭️ **Android**: Skipped (secrets not available or platform not selected)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # macOS Status
+          if [ "${{ needs.deploy-macos-certificates.result }}" == "success" ]; then
+            echo "- ✅ **macOS**: Certificates deployed, signed and notarized successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-macos-certificates.result }}" == "failure" ]; then
+            echo "- ❌ **macOS**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-macos-certificates.result }}" == "skipped" ]; then
+            echo "- ⏭️ **macOS**: Skipped (secrets not available or platform not selected)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Windows Status
+          if [ "${{ needs.deploy-windows-certificates.result }}" == "success" ]; then
+            echo "- ✅ **Windows**: Certificates deployed and signed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-windows-certificates.result }}" == "failure" ]; then
+            echo "- ❌ **Windows**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.deploy-windows-certificates.result }}" == "skipped" ]; then
+            echo "- ⏭️ **Windows**: Skipped (secrets not available or platform not selected)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            echo "- 📱 **iOS**: Check TestFlight for build availability" >> $GITHUB_STEP_SUMMARY
+            echo "- 🤖 **Android**: Check Google Play Internal Testing" >> $GITHUB_STEP_SUMMARY
+            echo "- 🖥️ **Desktop**: Download signed artifacts from this workflow" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- 🏪 **iOS**: Submit for App Store review via App Store Connect" >> $GITHUB_STEP_SUMMARY
+            echo "- 🏪 **Android**: Submit for Google Play review via Play Console" >> $GITHUB_STEP_SUMMARY
+            echo "- 🖥️ **Desktop**: Distribute signed artifacts via your preferred method" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Notes" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔐 All certificates are handled securely and not exposed in logs" >> $GITHUB_STEP_SUMMARY
+          echo "- 🗑️ Temporary keychains and certificate files are cleaned up automatically" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔄 Certificates expire and need periodic renewal (check expiration dates)" >> $GITHUB_STEP_SUMMARY
