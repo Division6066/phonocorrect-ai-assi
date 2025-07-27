@@ -1,0 +1,432 @@
+# GitHub Actions workflow for automated test reporting
+name: 'Comprehensive Test Suite with Reporting'
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run tests daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test scope to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - e2e
+          - performance
+
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '11'
+  XCODE_VERSION: '15.0'
+
+jobs:
+  # Matrix strategy for comprehensive platform testing
+  test-matrix:
+    name: 'Test Suite: ${{ matrix.platform }} - ${{ matrix.test-type }}'
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # iOS Testing
+          - platform: 'iOS'
+            os: 'macos-13'
+            test-type: 'detox'
+            experimental: false
+            ios-version: '17.0'
+            device: 'iPhone 14 Pro'
+          - platform: 'iOS'
+            os: 'macos-13'
+            test-type: 'detox'
+            experimental: false
+            ios-version: '16.0'
+            device: 'iPhone 12'
+            
+          # Android Testing
+          - platform: 'Android'
+            os: 'ubuntu-latest'
+            test-type: 'detox'
+            experimental: false
+            api-level: 34
+            arch: 'x86_64'
+          - platform: 'Android'
+            os: 'ubuntu-latest'
+            test-type: 'detox'
+            experimental: false
+            api-level: 26
+            arch: 'x86'
+            
+          # Web Testing
+          - platform: 'Web'
+            os: 'ubuntu-latest'
+            test-type: 'playwright'
+            experimental: false
+            browser: 'chromium'
+          - platform: 'Web'
+            os: 'ubuntu-latest'
+            test-type: 'playwright'
+            experimental: false
+            browser: 'firefox'
+          - platform: 'Web'
+            os: 'ubuntu-latest'
+            test-type: 'playwright'
+            experimental: false
+            browser: 'webkit'
+            
+          # Chrome Extension Testing
+          - platform: 'Chrome Extension'
+            os: 'ubuntu-latest'
+            test-type: 'playwright'
+            experimental: false
+            browser: 'chromium'
+            extension: true
+            
+          # Desktop Testing
+          - platform: 'Desktop'
+            os: 'windows-latest'
+            test-type: 'playwright'
+            experimental: false
+          - platform: 'Desktop'
+            os: 'macos-13'
+            test-type: 'playwright'
+            experimental: false
+          - platform: 'Desktop'
+            os: 'ubuntu-latest'
+            test-type: 'playwright'
+            experimental: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Java (Android only)
+        if: matrix.platform == 'Android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Android SDK
+        if: matrix.platform == 'Android'
+        uses: android-actions/setup-android@v3
+
+      - name: Setup iOS Simulator
+        if: matrix.platform == 'iOS'
+        run: |
+          xcrun simctl create test-device com.apple.CoreSimulator.SimDeviceType.${{ matrix.device }} com.apple.CoreSimulator.SimRuntime.iOS-${{ matrix.ios-version | replace('.', '-') }}
+          xcrun simctl boot test-device
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        if: matrix.test-type == 'playwright'
+        run: pnpm exec playwright install --with-deps ${{ matrix.browser || 'chromium firefox webkit' }}
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Run ESLint
+        run: pnpm lint --format json --output-file eslint-report.json || true
+
+      - name: Run Unit Tests (Jest)
+        if: matrix.test-type != 'detox'
+        run: |
+          pnpm test:unit --coverage --reporters=default --reporters=jest-junit --outputFile=jest-results.xml
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./test-results
+          JEST_JUNIT_OUTPUT_NAME: jest-${{ matrix.platform }}.xml
+
+      - name: Run Integration Tests
+        if: matrix.test-type != 'detox'
+        run: pnpm test:integration --reporters=jest-junit --outputFile=integration-results.xml
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./test-results
+
+      - name: Run Detox Tests (Mobile)
+        if: matrix.test-type == 'detox'
+        run: |
+          if [ "${{ matrix.platform }}" = "iOS" ]; then
+            pnpm detox test --configuration ios.sim.debug --device-name="test-device" --artifacts-location ./test-results/detox-artifacts
+          elif [ "${{ matrix.platform }}" = "Android" ]; then
+            pnpm detox test --configuration android.emu.debug --artifacts-location ./test-results/detox-artifacts
+          fi
+        env:
+          DETOX_ARTIFACTS_LOCATION: ./test-results/detox-artifacts
+
+      - name: Run Playwright Tests (Web/Desktop/Extension)
+        if: matrix.test-type == 'playwright'
+        run: |
+          if [ "${{ matrix.extension }}" = "true" ]; then
+            pnpm test:e2e:extension --project=${{ matrix.browser }} --reporter=junit --output-dir=./test-results
+          else
+            pnpm test:e2e --project=${{ matrix.browser }} --reporter=junit --output-dir=./test-results
+          fi
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: playwright-${{ matrix.platform }}-${{ matrix.browser }}.xml
+
+      - name: Run Performance Tests
+        if: matrix.test-type != 'detox'
+        run: pnpm test:performance --reporter=json --output-file=./test-results/performance-${{ matrix.platform }}.json
+
+      - name: Run Accessibility Tests
+        if: matrix.test-type == 'playwright'
+        run: pnpm test:a11y --reporter=junit --output-dir=./test-results
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: a11y-${{ matrix.platform }}.xml
+
+      - name: Generate Test Report
+        if: always()
+        run: |
+          node scripts/generate-test-report.js \
+            --platform="${{ matrix.platform }}" \
+            --test-type="${{ matrix.test-type }}" \
+            --results-dir="./test-results" \
+            --output="./test-results/test-report-${{ matrix.platform }}-${{ matrix.test-type }}.json"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.platform }}-${{ matrix.test-type }}
+          path: |
+            test-results/
+            coverage/
+          retention-days: 30
+
+      - name: Upload Screenshots (on failure)
+        if: failure() && matrix.test-type == 'playwright'
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.platform }}-${{ matrix.test-type }}
+          path: test-results/screenshots/
+          retention-days: 7
+
+  # Aggregate all test results
+  aggregate-results:
+    name: 'Aggregate Test Results'
+    needs: test-matrix
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: ./all-test-results
+          merge-multiple: true
+
+      - name: Install dependencies
+        run: npm install junit2json
+
+      - name: Aggregate and analyze results
+        run: |
+          node scripts/aggregate-test-results.js \
+            --input-dir="./all-test-results" \
+            --output="./aggregated-report.json" \
+            --html-output="./test-dashboard.html"
+
+      - name: Generate Test Summary
+        run: |
+          node scripts/generate-summary.js \
+            --input="./aggregated-report.json" \
+            --output="./test-summary.md"
+
+      - name: Upload Aggregated Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: aggregated-test-report
+          path: |
+            aggregated-report.json
+            test-dashboard.html
+            test-summary.md
+          retention-days: 90
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: 'Test Results Summary'
+          path: './all-test-results/**/*.xml'
+          reporter: jest-junit
+          fail-on-error: false
+
+      - name: Comment PR with Test Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('./test-summary.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🧪 Test Results Summary\n\n${summary}`
+            });
+
+      - name: Update Test Dashboard
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Deploy test dashboard to GitHub Pages
+          cp test-dashboard.html ./docs/test-dashboard.html
+          cp aggregated-report.json ./docs/latest-results.json
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          destination_dir: test-reports
+
+  # Performance regression detection
+  performance-analysis:
+    name: 'Performance Analysis'
+    needs: test-matrix
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download performance results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: ./performance-results
+
+      - name: Analyze performance trends
+        run: |
+          node scripts/analyze-performance.js \
+            --current="./performance-results" \
+            --baseline="main" \
+            --output="./performance-analysis.json"
+
+      - name: Check for regressions
+        run: |
+          node scripts/check-regressions.js \
+            --input="./performance-analysis.json" \
+            --threshold=10 \
+            --fail-on-regression=true
+
+      - name: Upload Performance Analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-analysis
+          path: performance-analysis.json
+
+  # Security and quality gates
+  quality-gates:
+    name: 'Quality Gates'
+    needs: test-matrix
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          path: ./quality-results
+
+      - name: Check coverage thresholds
+        run: |
+          node scripts/check-coverage.js \
+            --input="./quality-results" \
+            --min-coverage=80 \
+            --fail-on-low-coverage=true
+
+      - name: Check test success rates
+        run: |
+          node scripts/check-success-rates.js \
+            --input="./quality-results" \
+            --min-success-rate=95 \
+            --fail-on-low-rate=true
+
+      - name: Accessibility compliance check
+        run: |
+          node scripts/check-a11y-compliance.js \
+            --input="./quality-results" \
+            --standard="WCAG-AA" \
+            --fail-on-violations=true
+
+      - name: Generate quality report
+        run: |
+          node scripts/generate-quality-report.js \
+            --input="./quality-results" \
+            --output="./quality-report.json"
+
+      - name: Upload Quality Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: quality-report.json
+
+  # Notify on completion
+  notification:
+    name: 'Test Completion Notification'
+    needs: [aggregate-results, performance-analysis, quality-gates]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Notify Slack
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "🚨 Test suite failed for PhonoCorrect AI"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create GitHub issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Test suite failure - ${new Date().toISOString()}`,
+              body: `## Test Suite Failure\n\nThe comprehensive test suite has failed. Please check the workflow logs for details.\n\n**Workflow:** ${context.workflow}\n**Run ID:** ${context.runId}`,
+              labels: ['bug', 'testing', 'ci/cd']
+            });

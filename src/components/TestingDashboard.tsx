@@ -18,9 +18,11 @@ import {
   GitBranch,
   Monitor,
   Chrome,
-  Apple
+  Apple,
+  ChartLine
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { TestReportingDashboard } from "./TestReportingDashboard";
 
 interface TestResult {
   name: string;
@@ -524,6 +526,19 @@ export function TestingDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Comprehensive Test Reporting Dashboard */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ChartLine size={16} />
+            Test Reporting & Analytics
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TestReportingDashboard />
+        </CardContent>
+      </Card>
     </div>
   );
 }
