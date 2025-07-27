@@ -12,6 +12,7 @@ import { TextToSpeech } from "@/components/TextToSpeech";
 import { SpeechToText } from "@/components/SpeechToText";
 import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { LearningStats } from "@/components/LearningStats";
+import { PremiumAccountCard } from "@/components/PremiumAccountCard";
 import { MLModelsPanel } from "@/components/MLModelsPanel";
 import { CloudSyncPanel } from "@/components/CloudSyncPanel";
 import { DeploymentPanel } from "@/components/DeploymentPanel";
@@ -390,6 +391,7 @@ function App() {
           {/* Sidebar - only visible on writing tab */}
           {activeTab === "writing" && (
             <div className="space-y-6">
+              <PremiumAccountCard />
               <LearningStats preferences={userPreferences} />
               
               {/* Help Card */}
