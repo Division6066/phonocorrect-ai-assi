@@ -44,10 +44,10 @@
 - **Purpose**: Core assistance for users who spell words based on sound rather than traditional spelling rules
 - **Success Criteria**: 90%+ accuracy in identifying common phonetic patterns, sub-100ms response time
 
-### 2. Multi-Language Speech-to-Text
-- **Functionality**: Voice dictation with support for 25+ languages, real-time transcription, confidence indicators
-- **Purpose**: Enables users to bypass typing entirely and speak naturally in their preferred language
-- **Success Criteria**: Accurate transcription across supported languages, clear visual feedback, offline capability preparation
+### 2. Enhanced Speech Pipeline (Whisper.cpp + Coqui TTS)
+- **Functionality**: Advanced speech-to-text using Whisper.cpp with hardware acceleration, context-aware text-to-speech using Coqui TTS, and intelligent pipeline mode that automatically corrects and reads back spoken text
+- **Purpose**: Provides professional-grade speech processing with offline capability, natural-sounding voices, and seamless correction workflow
+- **Success Criteria**: <100ms inference time on modern hardware, 95%+ transcription accuracy, natural voice synthesis with emotional context, automatic phonetic correction in pipeline mode
 
 ### 3. Virtual Keyboard System
 - **Functionality**: On-screen keyboard with multiple language layouts (QWERTY, AZERTY, Cyrillic, Arabic, etc.)
@@ -69,17 +69,30 @@
 - **Purpose**: Assists users in proofreading and understanding their written content
 - **Success Criteria**: Clear speech synthesis, intuitive controls, natural pacing
 
-### 7. ML Model Integrations (NEW)
-- **Functionality**: Whisper STT for real speech processing and Gemma 2B for advanced phonetic correction
-- **Purpose**: Provides production-grade speech recognition and AI-powered text enhancement
-- **Success Criteria**: <100ms inference time, 94%+ accuracy, support for 12+ languages
+### 7. Enhanced ML Model Integrations 
+- **Functionality**: 
+  - Whisper.cpp integration for offline speech-to-text with hardware acceleration
+  - Coqui TTS for natural-sounding text-to-speech synthesis
+  - Gemma 2B for context-aware phonetic correction
+  - Smart pipeline mode: Speech → Transcription → Correction → Read-back
+- **Purpose**: Provides production-grade AI assistance with professional speech processing capabilities
+- **Success Criteria**: <100ms inference time with hardware acceleration, 95%+ transcription accuracy, natural voice synthesis, seamless offline operation
 
-### 8. Cloud Sync & Premium Features (NEW)
+### 8. Platform-Specific Speech Integration
+- **Functionality**: 
+  - iOS: Metal acceleration, native keyboard extension, Core ML integration
+  - Android: GPU compute shaders, InputMethodService, NNAPI acceleration  
+  - Desktop: Native libraries with CUDA/OpenCL, system-wide keyboard shortcuts
+  - Web: WebAssembly modules, Service Worker offline processing, WebGPU acceleration
+- **Purpose**: Maximizes performance and integration on each platform while maintaining feature parity
+- **Success Criteria**: Platform-appropriate performance, proper permission handling, consistent user experience
+
+### 9. Cloud Sync & Premium Features 
 - **Functionality**: Firebase authentication, cloud data sync, Stripe integration for premium subscriptions
 - **Purpose**: Multi-device synchronization and premium feature unlocking ($5/month tier)
 - **Success Criteria**: Seamless cross-device sync, secure payment processing, premium feature gating
 
-### 9. Mobile Apps & Chrome Extension Deployment (NEW)
+### 10. Mobile Apps & Chrome Extension Deployment 
 - **Functionality**: iOS/Android apps via app stores, Chrome extension via Web Store
 - **Purpose**: Extends PhonoCorrect AI to mobile devices and browser-based writing
 - **Success Criteria**: Successful app store approval, extension Web Store publication, feature parity

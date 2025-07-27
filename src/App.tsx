@@ -10,6 +10,7 @@ import { useElectron } from "@/hooks/use-electron";
 import { SuggestionCard } from "@/components/SuggestionCard";
 import { TextToSpeech } from "@/components/TextToSpeech";
 import { SpeechToText } from "@/components/SpeechToText";
+import { EnhancedSpeechPipeline } from "@/components/EnhancedSpeechPipeline";
 import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { LearningStats } from "@/components/LearningStats";
 import { PremiumAccountCard } from "@/components/PremiumAccountCard";
@@ -374,11 +375,12 @@ function App() {
                 {/* Text-to-Speech */}
                 {text.trim() && <TextToSpeech text={text} />}
 
-                {/* Speech-to-Text */}
+                {/* Enhanced Speech Pipeline */}
                 {showSpeechToText && (
-                  <SpeechToText 
+                  <EnhancedSpeechPipeline 
                     onTranscript={handleTranscript}
                     onAppendTranscript={handleAppendTranscript}
+                    textToSpeak={text}
                   />
                 )}
 
