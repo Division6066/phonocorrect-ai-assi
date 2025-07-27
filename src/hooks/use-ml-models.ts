@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useKV } from '@/lib/spark-hooks';
 
 export interface WhisperConfig {
   language: string;
