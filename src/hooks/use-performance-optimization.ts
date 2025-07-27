@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useKV } from '@/lib/spark-hooks';
+import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
 
 export interface DeviceSpecs {

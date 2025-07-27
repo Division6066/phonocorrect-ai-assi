@@ -27,7 +27,7 @@ import {
   Globe,
   Target
 } from "@phosphor-icons/react";
-import { useKV } from '@/lib/spark-hooks';
+import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
 
 interface ComparisonMetrics {

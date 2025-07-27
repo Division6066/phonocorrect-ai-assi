@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useKV } from '@/lib/spark-hooks';
+import { useKV } from '@github/spark/hooks';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { 
