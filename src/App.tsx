@@ -74,13 +74,13 @@ function App() {
       platform: "Android"
     },
     {
-      title: "Android Signing Keys",
-      description: "Generate release signing keys and upload key",
+      title: "Android Keystore & Service Account",
+      description: "Generate release signing keys and Google Play service account",
       platform: "Android"
     },
     {
       title: "CI/CD Configuration",
-      description: "Configure automated build and deployment",
+      description: "Configure automated build and deployment with secrets",
       platform: "Both"
     }
   ];
@@ -426,45 +426,110 @@ function App() {
                           {index === 4 && (
                             <div className="bg-muted/50 rounded p-3 text-sm space-y-3">
                               <div>
-                                <p className="font-medium mb-2">Keystore Generation:</p>
+                                <p className="font-medium mb-2">Automated Keystore Generation:</p>
                                 <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
                                   <div className="flex items-center justify-between">
-                                    <span># Generate Android Signing Key</span>
-                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('keytool -genkey -v -keystore phono-release-key.keystore -alias phono-key-alias -keyalg RSA -keysize 2048 -validity 10000', 'Android Keystore Command')}>
+                                    <span># Run automated setup script</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('npm run setup:android-keystore', 'Android Setup Command')}>
                                       <Copy size={12} />
                                     </Button>
                                   </div>
-                                  <div>keytool -genkey -v -keystore phono-release-key.keystore \</div>
-                                  <div>  -alias phono-key-alias -keyalg RSA -keysize 2048 \</div>
+                                  <div>npm run setup:android-keystore</div>
+                                  <div className="text-muted-foreground"># Generates keystore, passwords, and configuration</div>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <p className="font-medium mb-2">Manual Keystore Generation:</p>
+                                <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span># Generate Android Signing Key</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('keytool -genkey -v -keystore phonocorrectai-release-key.keystore -alias phonocorrectai-key-alias -keyalg RSA -keysize 2048 -validity 10000', 'Android Keystore Command')}>
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                  <div>keytool -genkey -v -keystore phonocorrectai-release-key.keystore \</div>
+                                  <div>  -alias phonocorrectai-key-alias -keyalg RSA -keysize 2048 \</div>
                                   <div>  -validity 10000</div>
                                 </div>
                               </div>
+
+                              <div>
+                                <p className="font-medium mb-2">Verify Configuration:</p>
+                                <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span># Verify keystore and setup</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('./scripts/verify-android-keystore.sh', 'Verify Command')}>
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                  <div>./scripts/verify-android-keystore.sh</div>
+                                </div>
+                              </div>
+
                               <Alert>
                                 <AlertTriangle className="h-4 w-4" />
                                 <AlertDescription className="text-xs">
-                                  Backup your keystore file securely. Losing it means you cannot update your app.
+                                  <strong>Critical:</strong> Backup your keystore file securely. Losing it means you cannot update your app on Google Play.
                                 </AlertDescription>
                               </Alert>
                             </div>
                           )}
 
                           {index === 5 && (
-                            <div className="bg-muted/50 rounded p-3 text-sm">
-                              <p className="font-medium mb-2">Environment Variables Template:</p>
-                              <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <span># Add to CI/CD secrets</span>
-                                  <Button size="sm" variant="ghost" onClick={() => copyToClipboard(`APPLE_CERTIFICATE_P12_BASE64=\nAPPLE_CERTIFICATE_PASSWORD=\nANDROID_KEYSTORE_BASE64=\nANDROID_KEYSTORE_PASSWORD=\nANDROID_KEY_ALIAS=\nANDROID_KEY_PASSWORD=`, 'Environment Variables')}>
-                                    <Copy size={12} />
-                                  </Button>
+                            <div className="bg-muted/50 rounded p-3 text-sm space-y-3">
+                              <div>
+                                <p className="font-medium mb-2">GitHub Secrets Configuration:</p>
+                                <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span># Set GitHub secrets via CLI</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('gh secret set ANDROID_KEYSTORE_BASE64 < keystore.base64', 'Set GitHub Secret')}>
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                  <div>gh secret set ANDROID_KEYSTORE_BASE64 < keystore.base64</div>
+                                  <div>gh secret set ANDROID_STORE_PASSWORD</div>
+                                  <div>gh secret set ANDROID_KEY_PASSWORD</div>
+                                  <div>gh secret set GOOGLE_PLAY_SERVICE_ACCOUNT_JSON < service-account.base64</div>
                                 </div>
-                                <div>APPLE_CERTIFICATE_P12_BASE64=</div>
-                                <div>APPLE_CERTIFICATE_PASSWORD=</div>
-                                <div>ANDROID_KEYSTORE_BASE64=</div>
-                                <div>ANDROID_KEYSTORE_PASSWORD=</div>
-                                <div>ANDROID_KEY_ALIAS=</div>
-                                <div>ANDROID_KEY_PASSWORD=</div>
                               </div>
+
+                              <div>
+                                <p className="font-medium mb-2">Test Keystore Setup:</p>
+                                <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span># Test via GitHub Actions</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard('gh workflow run android-keystore-setup.yml -f action=verify', 'Test Workflow')}>
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                  <div>gh workflow run android-keystore-setup.yml -f action=verify</div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="font-medium mb-2">Environment Variables Template:</p>
+                                <div className="bg-black text-green-400 p-2 rounded font-mono text-xs space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span># Required for CI/CD</span>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard(`ANDROID_KEYSTORE_BASE64=\nANDROID_STORE_PASSWORD=\nANDROID_KEY_PASSWORD=\nANDROID_KEY_ALIAS=phonocorrectai-key-alias\nGOOGLE_PLAY_SERVICE_ACCOUNT_JSON=`, 'Environment Variables')}>
+                                      <Copy size={12} />
+                                    </Button>
+                                  </div>
+                                  <div>ANDROID_KEYSTORE_BASE64=</div>
+                                  <div>ANDROID_STORE_PASSWORD=</div>
+                                  <div>ANDROID_KEY_PASSWORD=</div>
+                                  <div>ANDROID_KEY_ALIAS=phonocorrectai-key-alias</div>
+                                  <div>GOOGLE_PLAY_SERVICE_ACCOUNT_JSON=</div>
+                                </div>
+                              </div>
+
+                              <Alert>
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertDescription className="text-xs">
+                                  <strong>Security:</strong> Never commit actual secrets to version control. Use encrypted environment variables only.
+                                </AlertDescription>
+                              </Alert>
                             </div>
                           )}
                         </div>

@@ -31,3 +31,47 @@ packages
 .devcontainer/
 
 .spark-workbench-id
+
+# Android Security Files
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+android/keystores/
+android/config/*.env
+service-account*.json
+google-services.json
+keystore.base64
+*.base64
+
+# iOS Security Files
+*.mobileprovision
+*.p12
+ios/certificates/
+ios/profiles/
+
+# Sensitive Configuration
+.env.local
+.env.production
+.env.staging
+secrets.json
+config/secrets/
+
+# Build Artifacts
+*.apk
+*.aab
+*.ipa
+*.dmg
+*.exe
+*.deb
+*.rpm
+*.zip
+
+# Temporary Files
+temp/
+tmp/
+*.tmp
+*.temp
