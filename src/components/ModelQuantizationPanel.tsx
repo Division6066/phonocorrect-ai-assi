@@ -27,7 +27,8 @@ import {
   Sparkle,
   CloudArrowDown,
   HardDrives,
-  Scales
+  Scales,
+  Lightbulb
 } from "@phosphor-icons/react";
 import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
@@ -569,13 +570,175 @@ export const ModelQuantizationPanel: React.FC = () => {
 
         <TabsContent value="comparison" className="mt-6">
           <div className="space-y-6">
+            {/* 4-bit vs 16-bit Specific Comparison */}
+            {benchmarkResults.filter(r => r.quantization === '4bit' || r.quantization === '16bit').length >= 2 && (
+              <Card className="border-2 border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Scales size={20} className="text-primary" />
+                    4-bit vs 16-bit: Phonetic Correction Performance
+                    <Badge className="bg-primary text-primary-foreground">
+                      Recommended Comparison
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Head-to-head comparison */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {['4bit', '16bit'].map(quantization => {
+                        const result = benchmarkResults.find(r => r.quantization === quantization);
+                        const config = QUANTIZATION_LEVELS[quantization];
+                        if (!result || !config) return null;
+                        
+                        const Icon = config.icon;
+                        
+                        return (
+                          <div key={quantization} className={`p-6 border-2 rounded-lg bg-${config.color}-50 border-${config.color}-200`}>
+                            <div className="flex items-center gap-3 mb-4">
+                              <Icon size={24} className={`text-${config.color}-600`} />
+                              <div>
+                                <h3 className="font-bold text-lg">{config.name}</h3>
+                                <p className="text-sm text-muted-foreground">{config.description}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-white/70 p-3 rounded-lg">
+                                  <div className="text-xs text-muted-foreground mb-1">Inference Speed</div>
+                                  <div className="font-bold text-lg">{result.inferenceTime}ms</div>
+                                </div>
+                                <div className="bg-white/70 p-3 rounded-lg">
+                                  <div className="text-xs text-muted-foreground mb-1">Memory Usage</div>
+                                  <div className="font-bold text-lg">{formatBytes(result.memoryUsage * 1024 * 1024)}</div>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-white/70 p-3 rounded-lg">
+                                  <div className="text-xs text-muted-foreground mb-1">Accuracy</div>
+                                  <div className="font-bold text-lg">{result.accuracy}%</div>
+                                </div>
+                                <div className="bg-white/70 p-3 rounded-lg">
+                                  <div className="text-xs text-muted-foreground mb-1">Throughput</div>
+                                  <div className="font-bold text-lg">{result.throughput} t/s</div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Use case specific metrics */}
+                            <div className="mt-4 p-3 bg-white/50 rounded-lg">
+                              <div className="text-sm font-medium mb-2">For Phonetic Correction:</div>
+                              <div className="space-y-1 text-xs">
+                                <div className="flex justify-between">
+                                  <span>Real-time typing</span>
+                                  <span className={result.inferenceTime < 100 ? 'text-green-600' : result.inferenceTime < 200 ? 'text-yellow-600' : 'text-red-600'}>
+                                    {result.inferenceTime < 100 ? '✓ Excellent' : result.inferenceTime < 200 ? '⚠ Good' : '✗ Needs improvement'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Mobile battery life</span>
+                                  <span className={quantization === '4bit' ? 'text-green-600' : 'text-yellow-600'}>
+                                    {quantization === '4bit' ? '✓ Extended' : '⚠ Standard'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Correction quality</span>
+                                  <span className={result.accuracy > 95 ? 'text-green-600' : result.accuracy > 90 ? 'text-yellow-600' : 'text-red-600'}>
+                                    {result.accuracy > 95 ? '✓ Excellent' : result.accuracy > 90 ? '⚠ Good' : '✗ Needs improvement'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Direct comparison metrics */}
+                    <div className="p-4 bg-slate-50 rounded-lg">
+                      <h3 className="font-bold mb-3">Direct Comparison Analysis</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {(() => {
+                          const bit4 = benchmarkResults.find(r => r.quantization === '4bit');
+                          const bit16 = benchmarkResults.find(r => r.quantization === '16bit');
+                          if (!bit4 || !bit16) return null;
+                          
+                          const speedImprovement = Math.round(((bit16.inferenceTime - bit4.inferenceTime) / bit16.inferenceTime) * 100);
+                          const memoryReduction = Math.round(((bit16.memoryUsage - bit4.memoryUsage) / bit16.memoryUsage) * 100);
+                          const accuracyLoss = Math.round(bit16.accuracy - bit4.accuracy);
+                          
+                          return (
+                            <>
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-green-600">{speedImprovement > 0 ? '+' : ''}{speedImprovement}%</div>
+                                <div className="text-sm text-muted-foreground">Speed Improvement</div>
+                                <div className="text-xs mt-1">4-bit is faster</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-blue-600">{memoryReduction > 0 ? '-' : ''}{Math.abs(memoryReduction)}%</div>
+                                <div className="text-sm text-muted-foreground">Memory Reduction</div>
+                                <div className="text-xs mt-1">4-bit uses less RAM</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-orange-600">{accuracyLoss > 0 ? '-' : '+'}{Math.abs(accuracyLoss)}%</div>
+                                <div className="text-sm text-muted-foreground">Accuracy Trade-off</div>
+                                <div className="text-xs mt-1">16-bit is more accurate</div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    
+                    {/* Recommendations for phonetic correction */}
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h3 className="font-bold mb-3 flex items-center gap-2">
+                        <Lightbulb size={16} className="text-blue-600" />
+                        Recommendations for Phonetic Correction
+                      </h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="p-3 bg-white rounded border-l-4 border-green-400">
+                          <div className="font-medium text-green-800 mb-1">Choose 4-bit if:</div>
+                          <ul className="text-green-700 space-y-1 text-xs">
+                            <li>• You need real-time correction while typing</li>
+                            <li>• Battery life is critical (mobile devices)</li>
+                            <li>• Memory is limited (&lt;4GB available)</li>
+                            <li>• User types common phonetic mistakes</li>
+                          </ul>
+                        </div>
+                        
+                        <div className="p-3 bg-white rounded border-l-4 border-purple-400">
+                          <div className="font-medium text-purple-800 mb-1">Choose 16-bit if:</div>
+                          <ul className="text-purple-700 space-y-1 text-xs">
+                            <li>• Accuracy is paramount for complex words</li>
+                            <li>• Processing academic or technical text</li>
+                            <li>• Desktop environment with ample resources</li>
+                            <li>• Multi-language support is essential</li>
+                          </ul>
+                        </div>
+                        
+                        <div className="p-3 bg-white rounded border-l-4 border-blue-400">
+                          <div className="font-medium text-blue-800 mb-1">Hybrid Approach:</div>
+                          <div className="text-blue-700 text-xs">
+                            Use 4-bit for real-time suggestions and 16-bit for final document review
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Results Summary */}
             {benchmarkResults.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Gauge size={20} />
-                    Benchmark Results
+                    All Benchmark Results
                     <Badge variant="outline" className="text-xs">
                       {benchmarkResults.length} models tested
                     </Badge>

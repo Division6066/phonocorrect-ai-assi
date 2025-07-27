@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle, GitBranch, Play, Calendar } from "@phosphor-icons/react";
+import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle, GitBranch, Play, Calendar, Scales } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { DebugOverlay } from "@/components/DebugOverlay";
 import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
 import { MLModelsPanel } from "@/components/MLModelsPanel";
 import { ModelQuantizationPanel } from "@/components/ModelQuantizationPanel";
+import { QuantizationComparison } from "@/components/QuantizationComparison";
 import { usePerformanceOptimization } from "@/hooks/use-performance-optimization";
 
 // Simple mock interfaces
@@ -205,9 +206,12 @@ function App() {
             <Badge variant="outline" className="bg-blue-100 text-blue-800">
               {currentStatus.acceleration}
             </Badge>
+            <Badge variant="outline" className="bg-purple-100 text-purple-800">
+              4-bit vs 16-bit Comparison
+            </Badge>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            AI-powered phonetic spelling assistant with hardware-accelerated performance and model quantization comparison
+            AI-powered phonetic spelling assistant with comprehensive 4-bit vs 16-bit quantization comparison and hardware-accelerated performance optimization
           </p>
         </div>
 
@@ -215,7 +219,7 @@ function App() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="writing" className="flex items-center gap-2">
                   <Lightbulb size={14} />
                   Writing
@@ -239,6 +243,10 @@ function App() {
                 <TabsTrigger value="quantization" className="flex items-center gap-2">
                   <Brain size={14} />
                   Models
+                </TabsTrigger>
+                <TabsTrigger value="comparison" className="flex items-center gap-2">
+                  <Scales size={14} />
+                  Compare
                 </TabsTrigger>
                 <TabsTrigger value="about" className="flex items-center gap-2">
                   <FileText size={14} />
@@ -374,6 +382,10 @@ function App() {
                 </Card>
               </TabsContent>
 
+              <TabsContent value="comparison" className="mt-6">
+                <QuantizationComparison />
+              </TabsContent>
+
               <TabsContent value="about" className="mt-6">
                 <div className="space-y-6">
                   <MLModelsPanel />
@@ -386,8 +398,20 @@ function App() {
                       <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
                           PhonoCorrect AI is an assistive typing system that provides real-time phonetic spelling corrections
-                          for users with dyslexia and ADHD. This version features hardware-accelerated inference and model quantization comparison.
+                          for users with dyslexia and ADHD. This enhanced version features comprehensive 4-bit vs 16-bit model 
+                          quantization comparison and hardware-accelerated inference optimization.
                         </p>
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Quantization Comparison Features</h4>
+                          <ul className="text-sm text-muted-foreground space-y-1">
+                            <li>• Direct 4-bit vs 16-bit performance benchmarking</li>
+                            <li>• Scenario-based testing (basic phonetic, technical vocabulary, rapid typing)</li>
+                            <li>• Real-time suitability scoring for phonetic correction use cases</li>
+                            <li>• Mobile vs desktop deployment recommendations</li>
+                            <li>• Battery impact and memory usage analysis</li>
+                            <li>• Accuracy vs speed trade-off visualization</li>
+                          </ul>
+                        </div>
                         <div className="space-y-2">
                           <h4 className="font-medium">Performance Features</h4>
                           <ul className="text-sm text-muted-foreground space-y-1">
