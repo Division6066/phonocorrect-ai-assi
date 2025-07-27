@@ -431,7 +431,7 @@ function App() {
                           <ul className="text-sm text-muted-foreground space-y-1">
                             <li>• Detox end-to-end testing for iOS 16/17 and Android API 26/34</li>
                             <li>• Playwright cross-browser testing for web and Chrome extension</li>
-                            <li>• Jest unit tests for custom rule engine with >95% coverage</li>
+                            <li>• Jest unit tests for custom rule engine with &gt;95% coverage</li>
                             <li>• CI matrix testing across all supported platforms</li>
                             <li>• Performance benchmarking and regression testing</li>
                             <li>• Accessibility testing and screen reader compatibility</li>
@@ -444,7 +444,7 @@ function App() {
                             <li>• Web: Chromium, Firefox, Safari (Playwright)</li>
                             <li>• Extension: Chrome MV3 popup and content scripts</li>
                             <li>• Core: Custom rule engine with Jest unit tests</li>
-                            <li>• Performance: <100ms inference time validation</li>
+                            <li>• Performance: &lt;100ms inference time validation</li>
                             <li>• Accessibility: Screen reader and keyboard navigation</li>
                           </ul>
                         </div>
