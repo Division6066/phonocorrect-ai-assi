@@ -151,6 +151,120 @@ pnpm --filter ml-core test       # Run ML tests
 pnpm fetch-models gemma-2b-q4 web  # Download specific model
 ```
 
+## 🔐 Authentication & Premium Features
+
+### Authentication Setup
+
+PhonoCorrect AI uses Firebase Authentication with the following providers:
+- 📧 **Email/Password** - Traditional sign-up and sign-in
+- 🔐 **Google OAuth** - One-click sign-in with Google
+
+#### Environment Variables
+
+Create a `.env` file from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Configure your Firebase project:
+```env
+REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your_project_id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=123456789
+REACT_APP_FIREBASE_APP_ID=1:123456789:web:abcdef123456
+```
+
+### Premium Subscription ($5/month)
+
+PhonoCorrect AI offers a Premium subscription tier through Stripe integration:
+
+#### 🆓 Free Features
+- ✅ Local phonetic corrections
+- ✅ Basic speech-to-text
+- ✅ Text-to-speech
+- ✅ Custom rules (local only)
+- ✅ Virtual keyboard
+
+#### 👑 Premium Features
+- ✅ **Multi-device sync** - Keep your custom rules and learning data synced across all devices
+- ✅ **Advanced ML models** - Access to larger, more accurate correction models
+- ✅ **Cloud inference fallback** - When device performance is limited, use cloud processing
+- ✅ **Advanced analytics** - Detailed learning progress and accuracy metrics
+- ✅ **Priority support** - Direct support channel for Premium users
+
+#### Stripe Integration
+
+The Premium subscription is managed through Stripe with the following Cloud Functions:
+
+1. **`createCheckoutSession`** - Creates Stripe checkout session for new subscriptions
+2. **`createPortalLink`** - Generates customer portal link for subscription management
+3. **`handleStripeEvent`** - Webhook handler that updates user subscription status
+
+#### Subscription Status Sync
+
+User subscription status is automatically synced from Stripe webhooks:
+
+- `active` - Full Premium features available
+- `past_due` - Payment failed, features temporarily restricted
+- `canceled` - Subscription canceled, reverted to free tier
+- `free` - No active subscription
+
+#### Cloud Sync Restrictions
+
+Cloud sync endpoints automatically enforce Premium subscription requirements:
+
+```typescript
+// All sync operations check subscription status
+const { canSync, syncToCloud } = useCloudSync();
+
+if (canSync) {
+  await syncToCloud(userData);
+} else {
+  // Redirect to upgrade flow
+}
+```
+
+### Firebase Cloud Functions Setup
+
+Deploy the authentication and billing functions:
+
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Set Stripe configuration
+firebase functions:config:set stripe.secret_key="sk_test_..." 
+firebase functions:config:set stripe.webhook_secret="whsec_..."
+
+# Deploy functions
+cd functions
+npm install
+firebase deploy --only functions
+```
+
+### Development with Emulators
+
+For local development, use Firebase emulators:
+
+```bash
+# Start all emulators
+firebase emulators:start
+
+# Emulators will run on:
+# - Auth: http://localhost:9099
+# - Firestore: http://localhost:8080  
+# - Functions: http://localhost:5001
+# - UI: http://localhost:4000
+```
+
+Set `REACT_APP_FIREBASE_USE_PRODUCTION=false` to use emulators during development.
+
 ## 📦 Packages
 
 ### 🤖 packages/ml-core

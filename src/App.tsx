@@ -8,19 +8,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePhonoEngine } from "@/hooks/use-phono-engine";
 import { useElectron } from "@/hooks/use-electron";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { SuggestionCard } from "@/components/SuggestionCard";
 import { TextToSpeech } from "@/components/TextToSpeech";
 import { SpeechToText } from "@/components/SpeechToText";
 import { EnhancedSpeechPipeline } from "@/components/EnhancedSpeechPipeline";
 import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { LearningStats } from "@/components/LearningStats";
-import { PremiumAccountCard } from "@/components/PremiumAccountCard";
+import { UserProfileCard } from "@/components/UserProfileCard";
 import { MLModelsPanel } from "@/components/MLModelsPanel";
 import { CloudSyncPanel } from "@/components/CloudSyncPanel";
 import { DeploymentPanel } from "@/components/DeploymentPanel";
 import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
 import { CustomRulesPanel } from "@/components/CustomRulesPanel";
 import { RuleTemplatesPanel } from "@/components/RuleTemplatesPanel";
+import { LanguageSettingsPanel } from "@/components/LanguageSettingsPanel";
 import { Brain, Lightbulb, ArrowCounterClockwise, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Lightning, Globe, Template } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -37,6 +39,7 @@ const EXAMPLE_TEXTS = {
 
 function App() {
   const { currentLanguage, t } = useLanguage();
+  const { isPremium } = useAuth();
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showKeyboard, setShowKeyboard] = useState(false);
@@ -463,7 +466,7 @@ function App() {
           {/* Sidebar - only visible on writing, custom-rules, rule-templates, language and acceleration tabs */}
           {(activeTab === "writing" || activeTab === "custom-rules" || activeTab === "rule-templates" || activeTab === "language" || activeTab === "acceleration") && (
             <div className="space-y-6">
-              <PremiumAccountCard />
+              <UserProfileCard />
               <LearningStats preferences={userPreferences} />
               
               {/* Help Card */}
@@ -524,7 +527,7 @@ function App() {
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Cloud size={14} />
-                    <span>{t('features.cloud_sync')}</span>
+                    <span>{isPremium ? 'Cloud sync enabled' : t('features.cloud_sync')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Rocket size={14} />

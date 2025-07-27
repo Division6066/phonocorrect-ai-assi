@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "phonocorrect-ai"
+  },
+  "targets": {
+    "phonocorrect-ai": {
+      "hosting": {
+        "public": {
+          "source": ".",
+          "frameworksBackend": {
+            "region": "us-central1"
+          }
+        }
+      }
+    }
+  },
+  "etags": {}
+}
