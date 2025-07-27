@@ -1,6 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
+import { 
+  CoquiEngine, 
+  CoquiConfig, 
+  SynthesisResult,
+  getPlatformCapabilities 
+} from '@/lib/speech-engines';
 
 // Voice configurations for different TTS engines
 export interface Voice {
@@ -126,6 +132,8 @@ interface TextToSpeechState {
   currentWord: string;
   modelStatus: 'loading' | 'ready' | 'error' | 'not-loaded';
   availableVoices: Voice[];
+  engineType: 'coqui' | 'browser' | 'hybrid';
+  processingTime: number;
 }
 
 // Mock Coqui TTS engine - will be replaced with actual implementation
@@ -222,11 +230,16 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     totalDuration: 0,
     currentWord: '',
     modelStatus: 'not-loaded',
-    availableVoices: []
+    availableVoices: [],
+    engineType: 'browser',
+    processingTime: 0
   });
 
+  // Platform capabilities
+  const capabilities = useRef(getPlatformCapabilities());
+  
   // Refs
-  const coquiEngine = useRef<CoquiTTSEngine>(new CoquiTTSEngine());
+  const coquiEngine = useRef<CoquiEngine>(new CoquiEngine());
   const browserUtterance = useRef<SpeechSynthesisUtterance | null>(null);
   const audioSource = useRef<AudioBufferSourceNode | null>(null);
   const audioContext = useRef<AudioContext | null>(null);
@@ -241,23 +254,43 @@ export function useTextToSpeech(options: TTSOptions = {}) {
       try {
         let allVoices: Voice[] = [];
 
-        // Initialize Coqui TTS if enabled
-        if (coquiEnabled) {
-          setState(prev => ({ ...prev, modelStatus: 'loading' }));
+        // Check platform capabilities
+        if (!capabilities.current.isAudioContextSupported) {
+          setState(prev => ({ 
+            ...prev, 
+            error: 'Audio processing not supported on this platform',
+            modelStatus: 'error' 
+          }));
+          return;
+        }
+
+        // Initialize Coqui TTS if enabled and supported
+        if (coquiEnabled && capabilities.current.canUseCoqui) {
+          setState(prev => ({ ...prev, modelStatus: 'loading', engineType: 'coqui' }));
           
-          const initialized = await coquiEngine.current.initialize();
+          const coquiConfig: CoquiConfig = {
+            modelPath: `/models/coqui/${capabilities.current.isElectron ? 'ljspeech.bin' : 'ljspeech.wasm'}`,
+            language: 'en',
+            enableGPU: capabilities.current.isElectron
+          };
+          
+          const initialized = await coquiEngine.current.initialize(coquiConfig);
           if (initialized) {
             const coquiVoices = await coquiEngine.current.getAvailableVoices();
             allVoices = [...allVoices, ...coquiVoices];
             setState(prev => ({ ...prev, modelStatus: 'ready' }));
             toast.success('Coqui TTS models loaded');
           } else {
-            setState(prev => ({ ...prev, modelStatus: 'error' }));
+            setState(prev => ({ 
+              ...prev, 
+              modelStatus: 'error',
+              engineType: capabilities.current.isSpeechSynthesisSupported ? 'browser' : 'coqui'
+            }));
           }
         }
 
         // Get browser voices
-        if ('speechSynthesis' in window) {
+        if (capabilities.current.isSpeechSynthesisSupported) {
           const browserVoices = window.speechSynthesis.getVoices().map((voice, index): Voice => ({
             id: `browser-${index}`,
             name: voice.name,
@@ -268,19 +301,40 @@ export function useTextToSpeech(options: TTSOptions = {}) {
             description: `${voice.name} (${voice.lang})`
           }));
           allVoices = [...allVoices, ...browserVoices];
+          
+          if (!coquiEnabled || state.modelStatus !== 'ready') {
+            setState(prev => ({ 
+              ...prev,
+              engineType: coquiEnabled ? 'hybrid' : 'browser',
+              modelStatus: prev.modelStatus === 'error' ? 'ready' : prev.modelStatus
+            }));
+          }
         }
 
         setState(prev => ({ ...prev, availableVoices: allVoices }));
+        
+        if (allVoices.length === 0) {
+          setState(prev => ({ 
+            ...prev, 
+            error: 'No text-to-speech engines available',
+            modelStatus: 'error' 
+          }));
+        }
+        
       } catch (error) {
         console.error('Failed to initialize TTS engines:', error);
-        setState(prev => ({ ...prev, error: 'Failed to initialize text-to-speech', modelStatus: 'error' }));
+        setState(prev => ({ 
+          ...prev, 
+          error: 'Failed to initialize text-to-speech', 
+          modelStatus: 'error' 
+        }));
       }
     };
 
     initializeEngines();
 
     // Listen for browser voice changes
-    if ('speechSynthesis' in window) {
+    if (capabilities.current.isSpeechSynthesisSupported) {
       window.speechSynthesis.onvoiceschanged = initializeEngines;
     }
 
@@ -358,15 +412,30 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
       const finalOptions = { ...options, ...overrideOptions };
       const processedText = preprocess(text, voice);
+      const startTime = performance.now();
 
-      if (voice.engine === 'coqui' && state.modelStatus === 'ready') {
+      if (voice.engine === 'coqui' && (state.modelStatus === 'ready' || state.engineType === 'coqui')) {
         // Use Coqui TTS
-        const result = await coquiEngine.current.synthesize(processedText, voice, finalOptions);
+        const result = await coquiEngine.current.synthesize(processedText, {
+          speaker: finalOptions.voice,
+          emotion: finalOptions.emotion?.emotion,
+          speed: finalOptions.rate,
+          pitch: finalOptions.pitch
+        });
         
         // Setup audio playback
         audioContext.current = new AudioContext();
         audioSource.current = audioContext.current.createBufferSource();
-        audioSource.current.buffer = result.audioBuffer;
+        
+        // Convert our AudioBuffer to Web Audio API AudioBuffer
+        const webAudioBuffer = audioContext.current.createBuffer(
+          result.audioBuffer.channels,
+          result.audioBuffer.data.length,
+          result.audioBuffer.sampleRate
+        );
+        webAudioBuffer.getChannelData(0).set(result.audioBuffer.data);
+        
+        audioSource.current.buffer = webAudioBuffer;
         audioSource.current.connect(audioContext.current.destination);
 
         wordTimings.current = result.wordTimings;
@@ -384,20 +453,24 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           }
         };
 
+        const processingTime = performance.now() - startTime;
         setState(prev => ({ 
           ...prev, 
           isLoading: false, 
           isPlaying: true,
-          totalDuration: result.audioBuffer.duration
+          totalDuration: result.audioBuffer.duration,
+          processingTime: result.processingTime
         }));
 
         startTime.current = Date.now();
         audioSource.current.start();
         updatePosition();
+        
+        toast.success(`Synthesized with Coqui TTS (${result.processingTime.toFixed(0)}ms)`);
 
       } else {
         // Use browser speech synthesis
-        if (!('speechSynthesis' in window)) {
+        if (!capabilities.current.isSpeechSynthesisSupported) {
           throw new Error('Browser speech synthesis not supported');
         }
 
@@ -418,14 +491,17 @@ export function useTextToSpeech(options: TTSOptions = {}) {
         utterance.volume = finalOptions.volume || defaultVolume;
 
         utterance.onstart = () => {
+          const processingTime = performance.now() - startTime;
           setState(prev => ({ 
             ...prev, 
             isLoading: false, 
             isPlaying: true,
-            totalDuration: text.length * 0.08 // Estimate duration
+            totalDuration: text.length * 0.08, // Estimate duration
+            processingTime
           }));
           startTime.current = Date.now();
           updatePosition();
+          toast.success(`Speaking with browser TTS (${processingTime.toFixed(0)}ms)`);
         };
 
         utterance.onend = () => {
@@ -545,8 +621,20 @@ export function useTextToSpeech(options: TTSOptions = {}) {
   }, []);
 
   const isSupported = () => {
-    return (coquiEnabled && state.modelStatus === 'ready') || 
-           ('speechSynthesis' in window);
+    const coquiSupport = coquiEnabled && capabilities.current.canUseCoqui;
+    const browserSupport = capabilities.current.isSpeechSynthesisSupported;
+    return coquiSupport || browserSupport;
+  };
+
+  const getEngineInfo = () => {
+    const info = {
+      current: state.engineType,
+      coquiAvailable: capabilities.current.canUseCoqui,
+      browserAvailable: capabilities.current.isSpeechSynthesisSupported,
+      platform: capabilities.current.isElectron ? 'electron' : 
+                capabilities.current.isReactNative ? 'react-native' : 'web'
+    };
+    return info;
   };
 
   return {
@@ -561,6 +649,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
     coquiEnabled,
     isSupported: isSupported(),
     currentVoice: getCurrentVoice(),
+    engineInfo: getEngineInfo(),
+    capabilities: capabilities.current,
 
     // Actions
     speak,

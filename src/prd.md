@@ -44,10 +44,10 @@
 - **Purpose**: Core assistance for users who spell words based on sound rather than traditional spelling rules
 - **Success Criteria**: 90%+ accuracy in identifying common phonetic patterns, sub-100ms response time
 
-### 2. Enhanced Speech Pipeline (Whisper.cpp + Coqui TTS)
-- **Functionality**: Advanced speech-to-text using Whisper.cpp with hardware acceleration, context-aware text-to-speech using Coqui TTS, and intelligent pipeline mode that automatically corrects and reads back spoken text
-- **Purpose**: Provides professional-grade speech processing with offline capability, natural-sounding voices, and seamless correction workflow
-- **Success Criteria**: <100ms inference time on modern hardware, 95%+ transcription accuracy, natural voice synthesis with emotional context, automatic phonetic correction in pipeline mode
+### 2. Enhanced Speech Pipeline (Whisper.cpp + Gemma + Coqui TTS)
+- **Functionality**: Complete offline speech processing pipeline featuring Whisper.cpp for speech-to-text, Gemma 2B for phonetic correction, and Coqui TTS for natural speech synthesis. Includes real-time audio processing, multi-language support, and intelligent pipeline mode for automatic speech correction.
+- **Purpose**: Provides enterprise-grade speech processing entirely offline for privacy, with natural-sounding voices, intelligent phonetic correction, and seamless correction workflow
+- **Success Criteria**: <200ms total pipeline processing time, 95%+ transcription accuracy across 25+ languages, natural voice synthesis with prosody, automatic phonetic correction with 90%+ accuracy, hardware acceleration support
 
 ### 3. Virtual Keyboard System
 - **Functionality**: On-screen keyboard with multiple language layouts (QWERTY, AZERTY, Cyrillic, Arabic, etc.)
@@ -71,21 +71,24 @@
 
 ### 7. Enhanced ML Model Integrations 
 - **Functionality**: 
-  - Whisper.cpp integration for offline speech-to-text with hardware acceleration
-  - Coqui TTS for natural-sounding text-to-speech synthesis
-  - Gemma 2B for context-aware phonetic correction
-  - Smart pipeline mode: Speech → Transcription → Correction → Read-back
-- **Purpose**: Provides production-grade AI assistance with professional speech processing capabilities
-- **Success Criteria**: <100ms inference time with hardware acceleration, 95%+ transcription accuracy, natural voice synthesis, seamless offline operation
+  - Whisper.cpp integration for offline speech-to-text with platform-specific optimization (WASM for web, native addons for desktop, TurboModules for mobile)
+  - Coqui TTS for natural-sounding text-to-speech synthesis with emotional prosody and multi-language support
+  - Gemma 2B (4-bit quantized) for context-aware phonetic correction with learning capabilities
+  - Complete speech pipeline: Audio → Whisper → Gemma → Coqui → Audio output
+  - Platform-specific hardware acceleration (Metal/Core ML for iOS, NNAPI for Android, CUDA/OpenCL for desktop, WebGPU for web)
+- **Purpose**: Provides production-grade AI assistance with professional speech processing capabilities entirely offline for privacy and reliability
+- **Success Criteria**: <200ms total pipeline processing time, 95%+ transcription accuracy across 25+ languages, natural voice synthesis with word-level timing, automatic phonetic correction with 90%+ accuracy, seamless offline operation, hardware acceleration on all platforms
 
-### 8. Platform-Specific Speech Integration
+### 8. Native Module Architecture
 - **Functionality**: 
-  - iOS: Metal acceleration, native keyboard extension, Core ML integration
-  - Android: GPU compute shaders, InputMethodService, NNAPI acceleration  
-  - Desktop: Native libraries with CUDA/OpenCL, system-wide keyboard shortcuts
-  - Web: WebAssembly modules, Service Worker offline processing, WebGPU acceleration
-- **Purpose**: Maximizes performance and integration on each platform while maintaining feature parity
-- **Success Criteria**: Platform-appropriate performance, proper permission handling, consistent user experience
+  - React Native TurboModules for iOS/Android with C++ bridges to ML engines
+  - Electron native addons (.node files) for desktop with N-API bindings
+  - WebAssembly modules with SIMD support for web browsers
+  - Unified TypeScript API layer across all platforms
+  - Permission management for microphone, storage, and notifications
+  - Model download and management system with progress tracking
+- **Purpose**: Enables consistent ML performance across platforms while respecting platform-specific optimizations and user permissions
+- **Success Criteria**: Platform-appropriate performance (native speed), proper permission handling, consistent TypeScript API, automated model management, seamless platform detection
 
 ### 9. Cloud Sync & Premium Features 
 - **Functionality**: Firebase authentication, cloud data sync, Stripe integration for premium subscriptions

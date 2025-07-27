@@ -1,6 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
+import { 
+  WhisperEngine, 
+  WhisperConfig, 
+  AudioBuffer, 
+  TranscriptionResult,
+  getPlatformCapabilities 
+} from '@/lib/speech-engines';
 
 // Enhanced language support with Whisper.cpp model mapping
 export const WHISPER_LANGUAGES = [
@@ -47,14 +54,8 @@ interface SpeechToTextState {
   error: string | null;
   audioLevel: number;
   modelStatus: 'loading' | 'ready' | 'error' | 'not-loaded';
-}
-
-interface WhisperConfig {
-  modelPath: string;
-  language: string;
-  enableVAD: boolean; // Voice Activity Detection
-  silenceThreshold: number;
-  maxRecordingTime: number;
+  engineType: 'whisper' | 'browser' | 'hybrid';
+  processingTime: number;
 }
 
 interface SpeechToTextOptions {
@@ -63,6 +64,8 @@ interface SpeechToTextOptions {
   fallbackToBrowser?: boolean;
   enableRealtime?: boolean;
   enableVAD?: boolean;
+  modelSize?: 'tiny' | 'base' | 'small' | 'medium' | 'large';
+  quantization?: '4bit' | '8bit' | 'fp16' | 'fp32';
 }
 
 // Mock Whisper.cpp integration - will be replaced with actual implementation
@@ -127,13 +130,16 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
     useWhisper = true,
     fallbackToBrowser = true,
     enableRealtime = true,
-    enableVAD = true
+    enableVAD = true,
+    modelSize = 'base',
+    quantization = '4bit'
   } = options;
 
   // Persistent settings
   const [selectedLanguage, setSelectedLanguage] = useKV('stt-language', language);
   const [whisperEnabled, setWhisperEnabled] = useKV('stt-whisper-enabled', useWhisper);
   const [realtimeEnabled, setRealtimeEnabled] = useKV('stt-realtime-enabled', enableRealtime);
+  const [modelSizePreference, setModelSizePreference] = useKV('stt-model-size', modelSize);
 
   // State
   const [state, setState] = useState<SpeechToTextState>({
@@ -144,9 +150,14 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
     confidence: 0,
     error: null,
     audioLevel: 0,
-    modelStatus: 'not-loaded'
+    modelStatus: 'not-loaded',
+    engineType: 'browser',
+    processingTime: 0
   });
 
+  // Platform capabilities
+  const capabilities = useRef(getPlatformCapabilities());
+  
   // Refs
   const whisperEngine = useRef<WhisperEngine>(new WhisperEngine());
   const recognition = useRef<SpeechRecognition | null>(null);
@@ -160,38 +171,75 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
   useEffect(() => {
     const initializeEngines = async () => {
       try {
-        // Initialize Whisper if enabled
-        if (whisperEnabled) {
-          setState(prev => ({ ...prev, modelStatus: 'loading' }));
+        // Check platform capabilities
+        if (!capabilities.current.isAudioContextSupported) {
+          setState(prev => ({ 
+            ...prev, 
+            error: 'Audio processing not supported on this platform',
+            modelStatus: 'error' 
+          }));
+          return;
+        }
+
+        // Initialize Whisper if enabled and supported
+        if (whisperEnabled && capabilities.current.canUseWhisper) {
+          setState(prev => ({ ...prev, modelStatus: 'loading', engineType: 'whisper' }));
           
           const whisperConfig: WhisperConfig = {
-            modelPath: `/models/whisper-${WHISPER_LANGUAGES.find(l => l.code === selectedLanguage)?.whisperModel || 'base'}.bin`,
+            modelPath: `/models/whisper-${modelSizePreference}.${capabilities.current.isElectron ? 'bin' : 'wasm'}`,
             language: selectedLanguage,
             enableVAD: enableVAD,
             silenceThreshold: 0.01,
-            maxRecordingTime: 30000
+            maxRecordingTime: 30000,
+            quantization
           };
           
           const initialized = await whisperEngine.current.initialize(whisperConfig);
           setState(prev => ({ 
             ...prev, 
-            modelStatus: initialized ? 'ready' : 'error' 
+            modelStatus: initialized ? 'ready' : 'error',
+            engineType: initialized ? 'whisper' : fallbackToBrowser ? 'browser' : 'whisper'
           }));
           
           if (initialized) {
-            toast.success(`Whisper model loaded for ${WHISPER_LANGUAGES.find(l => l.code === selectedLanguage)?.label}`);
+            const langInfo = WHISPER_LANGUAGES.find(l => l.code === selectedLanguage);
+            toast.success(`Whisper model loaded for ${langInfo?.label} (${modelSizePreference})`);
+          } else if (!fallbackToBrowser) {
+            toast.error('Failed to load Whisper model and browser fallback disabled');
+            return;
           }
         }
 
-        // Initialize browser speech recognition as fallback
-        if (fallbackToBrowser && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          recognition.current = new SpeechRecognition();
-          setupBrowserRecognition();
+        // Initialize browser speech recognition as fallback or primary
+        if ((fallbackToBrowser && state.modelStatus !== 'ready') || !whisperEnabled) {
+          if (capabilities.current.isSpeechRecognitionSupported) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition.current = new SpeechRecognition();
+            setupBrowserRecognition();
+            
+            if (!whisperEnabled || state.modelStatus !== 'ready') {
+              setState(prev => ({ 
+                ...prev, 
+                engineType: whisperEnabled ? 'hybrid' : 'browser',
+                modelStatus: prev.modelStatus === 'error' ? 'ready' : prev.modelStatus
+              }));
+            }
+          } else {
+            setState(prev => ({ 
+              ...prev, 
+              error: 'No speech recognition available on this platform',
+              modelStatus: 'error' 
+            }));
+          }
         }
+
       } catch (error) {
         console.error('Failed to initialize speech engines:', error);
-        setState(prev => ({ ...prev, error: 'Failed to initialize speech recognition', modelStatus: 'error' }));
+        setState(prev => ({ 
+          ...prev, 
+          error: 'Failed to initialize speech recognition', 
+          modelStatus: 'error' 
+        }));
       }
     };
 
@@ -204,7 +252,7 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
       }
       stopAudioCapture();
     };
-  }, [selectedLanguage, whisperEnabled, enableVAD, fallbackToBrowser]);
+  }, [selectedLanguage, whisperEnabled, enableVAD, fallbackToBrowser, modelSizePreference, quantization]);
 
   const setupBrowserRecognition = useCallback(() => {
     if (!recognition.current) return;
@@ -350,26 +398,46 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
     if (!state.isListening) return;
 
     setState(prev => ({ ...prev, isProcessing: true }));
+    const startTime = performance.now();
 
     // Process Whisper recording
-    if (whisperEnabled && state.modelStatus === 'ready' && recordingData.current.length > 0) {
+    if (whisperEnabled && (state.modelStatus === 'ready' || state.engineType === 'whisper') && recordingData.current.length > 0) {
       try {
-        const audioBuffer = new Float32Array(recordingData.current.reduce((acc, chunk) => acc + chunk.length, 0));
+        // Concatenate audio chunks
+        const totalLength = recordingData.current.reduce((acc, chunk) => acc + chunk.length, 0);
+        const audioData = new Float32Array(totalLength);
         let offset = 0;
         for (const chunk of recordingData.current) {
-          audioBuffer.set(chunk, offset);
+          audioData.set(chunk, offset);
           offset += chunk.length;
         }
 
-        const result = await whisperEngine.current.transcribe(audioBuffer, selectedLanguage);
+        // Create AudioBuffer for Whisper
+        const audioBuffer: AudioBuffer = {
+          sampleRate: audioContext.current?.sampleRate || 16000,
+          channels: 1,
+          data: audioData,
+          duration: audioData.length / (audioContext.current?.sampleRate || 16000)
+        };
+
+        const result = await whisperEngine.current.transcribe(audioBuffer);
+        
         setState(prev => ({ 
           ...prev, 
           finalResult: prev.finalResult + result.text,
-          confidence: result.confidence 
+          confidence: result.confidence,
+          processingTime: result.processingTime
         }));
+        
+        toast.success(`Transcribed with Whisper (${result.processingTime.toFixed(0)}ms)`);
       } catch (error) {
         console.error('Whisper transcription failed:', error);
-        setState(prev => ({ ...prev, error: 'Transcription failed' }));
+        setState(prev => ({ ...prev, error: 'Whisper transcription failed' }));
+        
+        // Fallback to browser result if available
+        if (fallbackToBrowser && recognition.current) {
+          toast.info('Falling back to browser speech recognition');
+        }
       }
     }
 
@@ -379,8 +447,15 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
     }
 
     stopAudioCapture();
-    setState(prev => ({ ...prev, isListening: false, isProcessing: false }));
-  }, [state.isListening, state.modelStatus, whisperEnabled, selectedLanguage, stopAudioCapture]);
+    
+    const totalTime = performance.now() - startTime;
+    setState(prev => ({ 
+      ...prev, 
+      isListening: false, 
+      isProcessing: false,
+      processingTime: prev.processingTime || totalTime
+    }));
+  }, [state.isListening, state.modelStatus, state.engineType, whisperEnabled, selectedLanguage, fallbackToBrowser, stopAudioCapture]);
 
   const resetTranscription = useCallback(() => {
     setState(prev => ({ 
@@ -414,8 +489,22 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
   };
 
   const isSupported = () => {
-    return (whisperEnabled && state.modelStatus === 'ready') || 
-           (fallbackToBrowser && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window));
+    const whisperSupport = whisperEnabled && capabilities.current.canUseWhisper;
+    const browserSupport = fallbackToBrowser && capabilities.current.isSpeechRecognitionSupported;
+    return whisperSupport || browserSupport;
+  };
+
+  const getEngineInfo = () => {
+    const info = {
+      current: state.engineType,
+      whisperAvailable: capabilities.current.canUseWhisper,
+      browserAvailable: capabilities.current.isSpeechRecognitionSupported,
+      platform: capabilities.current.isElectron ? 'electron' : 
+                capabilities.current.isReactNative ? 'react-native' : 'web',
+      modelSize: modelSizePreference,
+      quantization
+    };
+    return info;
   };
 
   return {
@@ -424,9 +513,12 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
     selectedLanguage,
     whisperEnabled,
     realtimeEnabled,
+    modelSizePreference,
     isSupported: isSupported(),
     supportedLanguages: WHISPER_LANGUAGES,
     currentLanguage: getCurrentLanguage(),
+    engineInfo: getEngineInfo(),
+    capabilities: capabilities.current,
 
     // Actions
     startListening,
@@ -435,6 +527,7 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
     setSelectedLanguage,
     setWhisperEnabled,
     setRealtimeEnabled,
+    setModelSizePreference,
 
     // Utils
     getRecognitionErrorMessage,

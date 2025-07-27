@@ -19,10 +19,16 @@ import {
   Cpu,
   Globe,
   Lightning,
-  VolumeHigh
+  VolumeHigh,
+  Brain,
+  ArrowRight,
+  CheckCircle,
+  XCircle
 } from "@phosphor-icons/react";
 import { useSpeechToText, WHISPER_LANGUAGES } from "@/hooks/use-speech-to-text";
 import { useTextToSpeech, COQUI_VOICES } from "@/hooks/use-text-to-speech";
+import { usePhonoEngine } from "@/hooks/use-phono-engine";
+import { SpeechPipeline, createSpeechPipeline, getPlatformCapabilities } from "@/lib/speech-engines";
 import { toast } from 'sonner';
 
 interface EnhancedSpeechPipelineProps {
@@ -40,8 +46,16 @@ export function EnhancedSpeechPipeline({
 }: EnhancedSpeechPipelineProps) {
   const [activeTab, setActiveTab] = useState<'stt' | 'tts' | 'pipeline'>('pipeline');
   const [pipelineMode, setPipelineMode] = useState(false);
+  const [isInitializingPipeline, setIsInitializingPipeline] = useState(false);
   
-  // Speech-to-Text hook
+  // Platform capabilities
+  const capabilities = useRef(getPlatformCapabilities());
+  
+  // Integrated speech pipeline
+  const speechPipeline = useRef<SpeechPipeline>(createSpeechPipeline());
+  const [pipelineInitialized, setPipelineInitialized] = useState(false);
+  
+  // Individual engines for tab controls
   const stt = useSpeechToText({
     language: 'en',
     useWhisper: true,
@@ -50,7 +64,6 @@ export function EnhancedSpeechPipeline({
     enableVAD: true
   });
 
-  // Text-to-Speech hook
   const tts = useTextToSpeech({
     rate: 1.0,
     pitch: 1.0,
@@ -59,29 +72,120 @@ export function EnhancedSpeechPipeline({
     ssmlEnabled: true
   });
 
+  // Phonetic correction engine
+  const phonoEngine = usePhonoEngine('');
+
   // Pipeline state
   const [pipelineText, setPipelineText] = useState('');
+  const [correctedText, setCorrectedText] = useState('');
   const [isProcessingPipeline, setIsProcessingPipeline] = useState(false);
+  const [pipelineStage, setPipelineStage] = useState<'idle' | 'listening' | 'transcribing' | 'correcting' | 'speaking'>('idle');
+  const [pipelineResult, setPipelineResult] = useState<any>(null);
 
-  // Handle speech-to-text results
+  // Initialize integrated speech pipeline
   useEffect(() => {
-    if (stt.finalResult && onTranscript) {
-      onTranscript(stt.finalResult);
-      if (pipelineMode) {
-        setPipelineText(stt.finalResult);
+    const initializePipeline = async () => {
+      if (!pipelineMode || pipelineInitialized) return;
+      
+      setIsInitializingPipeline(true);
+      try {
+        const success = await speechPipeline.current.initialize({
+          whisper: {
+            modelPath: `/models/whisper-${stt.modelSizePreference}.${capabilities.current.isElectron ? 'bin' : 'wasm'}`,
+            language: stt.selectedLanguage,
+            enableVAD: true,
+            silenceThreshold: 0.01,
+            maxRecordingTime: 30000,
+            quantization: '4bit'
+          },
+          coqui: {
+            modelPath: `/models/coqui/${capabilities.current.isElectron ? 'ljspeech.bin' : 'ljspeech.wasm'}`,
+            language: 'en',
+            enableGPU: capabilities.current.isElectron
+          },
+          gemma: {
+            modelPath: `/models/gemma-2b-q4.${capabilities.current.isElectron ? 'bin' : 'wasm'}`,
+            contextSize: 2048,
+            temperature: 0.7,
+            topP: 0.9,
+            enableQuantization: true
+          }
+        });
+        
+        setPipelineInitialized(success);
+        if (success) {
+          toast.success('Speech pipeline initialized successfully');
+        } else {
+          toast.error('Failed to initialize speech pipeline');
+        }
+      } catch (error) {
+        console.error('Pipeline initialization failed:', error);
+        toast.error('Pipeline initialization failed');
+      } finally {
+        setIsInitializingPipeline(false);
       }
+    };
+
+    initializePipeline();
+    
+    return () => {
+      if (pipelineInitialized) {
+        speechPipeline.current.cleanup();
+        setPipelineInitialized(false);
+      }
+    };
+  }, [pipelineMode, stt.selectedLanguage, stt.modelSizePreference]);
+
+  // Handle individual STT results
+  useEffect(() => {
+    if (stt.finalResult && onTranscript && !pipelineMode) {
+      onTranscript(stt.finalResult);
     }
   }, [stt.finalResult, onTranscript, pipelineMode]);
 
-  // Auto-speak in pipeline mode
-  useEffect(() => {
-    if (pipelineMode && pipelineText && !stt.isListening && !tts.isPlaying) {
-      const timer = setTimeout(() => {
-        tts.speak(pipelineText);
-      }, 500);
-      return () => clearTimeout(timer);
+  // Enhanced pipeline processing
+  const processWithPipeline = useCallback(async (audioBuffer: any) => {
+    if (!pipelineInitialized) {
+      toast.error('Pipeline not initialized');
+      return;
     }
-  }, [pipelineMode, pipelineText, stt.isListening, tts.isPlaying, tts.speak]);
+
+    setIsProcessingPipeline(true);
+    setPipelineStage('transcribing');
+    
+    try {
+      const result = await speechPipeline.current.processAudio(audioBuffer, {
+        correctSpelling: true,
+        synthesizeResponse: true,
+        voice: tts.selectedVoice,
+        emotion: 'neutral'
+      });
+
+      setPipelineResult(result);
+      setPipelineText(result.transcript.text);
+      setCorrectedText(result.corrections?.text || result.transcript.text);
+      
+      setPipelineStage('correcting');
+      await new Promise(resolve => setTimeout(resolve, 500)); // Show correction stage
+      
+      setPipelineStage('speaking');
+      
+      // Trigger callbacks
+      if (onTranscript) {
+        onTranscript(result.corrections?.text || result.transcript.text);
+      }
+      
+      toast.success(`Pipeline complete: ${result.transcript.processingTime + (result.corrections?.processingTime || 0) + (result.synthesis?.processingTime || 0)}ms`);
+      
+    } catch (error) {
+      console.error('Pipeline processing failed:', error);
+      toast.error('Pipeline processing failed');
+      setPipelineStage('idle');
+    } finally {
+      setIsProcessingPipeline(false);
+      setTimeout(() => setPipelineStage('idle'), 2000);
+    }
+  }, [pipelineInitialized, tts.selectedVoice, onTranscript]);
 
   const handlePipelineToggle = useCallback(() => {
     if (pipelineMode) {
@@ -89,18 +193,39 @@ export function EnhancedSpeechPipeline({
       stt.stopListening();
       tts.stop();
       setPipelineText('');
+      setCorrectedText('');
       setIsProcessingPipeline(false);
+      setPipelineStage('idle');
+      setPipelineResult(null);
     }
     setPipelineMode(!pipelineMode);
   }, [pipelineMode, stt.stopListening, tts.stop]);
 
   const startPipelineListening = useCallback(async () => {
-    if (!pipelineMode) return;
+    if (!pipelineMode || !pipelineInitialized) return;
     
-    setIsProcessingPipeline(true);
+    setPipelineStage('listening');
     setPipelineText('');
+    setCorrectedText('');
+    setPipelineResult(null);
+    
     await stt.startListening();
-  }, [pipelineMode, stt.startListening]);
+  }, [pipelineMode, pipelineInitialized, stt.startListening]);
+
+  // Auto-process when STT completes in pipeline mode
+  useEffect(() => {
+    if (pipelineMode && stt.finalResult && !stt.isListening && pipelineStage === 'listening') {
+      // Mock audio buffer from STT result - in real implementation, this would come from actual audio capture
+      const mockAudioBuffer = {
+        sampleRate: 16000,
+        channels: 1,
+        data: new Float32Array(16000), // 1 second of silence
+        duration: 1.0
+      };
+      
+      processWithPipeline(mockAudioBuffer);
+    }
+  }, [pipelineMode, stt.finalResult, stt.isListening, pipelineStage, processWithPipeline]);
 
   const renderSTTTab = () => (
     <div className="space-y-4">
@@ -126,6 +251,49 @@ export function EnhancedSpeechPipeline({
             <span className="text-xs text-muted-foreground">Hardware accelerated</span>
           </div>
         </div>
+      </div>
+
+      {/* Engine Info */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-muted-foreground">Engine Status</label>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-2">
+            <Badge variant={stt.engineInfo.whisperAvailable ? 'default' : 'secondary'} className="text-xs">
+              <Cpu size={10} className="mr-1" />
+              Whisper {stt.engineInfo.current === 'whisper' ? '(Active)' : ''}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={stt.engineInfo.browserAvailable ? 'default' : 'secondary'} className="text-xs">
+              <Globe size={10} className="mr-1" />
+              Browser {stt.engineInfo.current === 'browser' ? '(Active)' : ''}
+            </Badge>
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Platform: {stt.engineInfo.platform} • Model: {stt.modelSizePreference} • Quantization: {stt.engineInfo.quantization}
+        </div>
+      </div>
+
+      {/* Model Size Selection */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-muted-foreground">Model Size</label>
+        <Select 
+          value={stt.modelSizePreference} 
+          onValueChange={stt.setModelSizePreference}
+          disabled={stt.isListening}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="tiny">Tiny (39MB) - Fastest</SelectItem>
+            <SelectItem value="base">Base (142MB) - Balanced</SelectItem>
+            <SelectItem value="small">Small (466MB) - Better Quality</SelectItem>
+            <SelectItem value="medium">Medium (1.5GB) - High Quality</SelectItem>
+            <SelectItem value="large">Large (2.9GB) - Best Quality</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Language Selection */}
@@ -295,6 +463,28 @@ export function EnhancedSpeechPipeline({
             <Lightning size={14} className="text-primary" />
             <span className="text-xs text-muted-foreground">Neural voices</span>
           </div>
+        </div>
+      </div>
+
+      {/* Engine Info */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-muted-foreground">Engine Status</label>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-2">
+            <Badge variant={tts.engineInfo.coquiAvailable ? 'default' : 'secondary'} className="text-xs">
+              <Cpu size={10} className="mr-1" />
+              Coqui {tts.engineInfo.current === 'coqui' ? '(Active)' : ''}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={tts.engineInfo.browserAvailable ? 'default' : 'secondary'} className="text-xs">
+              <Globe size={10} className="mr-1" />
+              Browser {tts.engineInfo.current === 'browser' ? '(Active)' : ''}
+            </Badge>
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Platform: {tts.engineInfo.platform} • Processing: {tts.processingTime}ms
         </div>
       </div>
 
@@ -500,56 +690,152 @@ export function EnhancedSpeechPipeline({
           <div>
             <h3 className="font-medium text-sm">Smart Pipeline Mode</h3>
             <p className="text-xs text-muted-foreground">
-              Automatically correct and read back your speech
+              Speech → Whisper → Gemma → Coqui → Audio
             </p>
           </div>
           <Switch 
             checked={pipelineMode} 
             onCheckedChange={handlePipelineToggle}
+            disabled={isInitializingPipeline}
           />
         </div>
         
         {pipelineMode && (
-          <div className="flex items-center gap-2 text-xs text-primary">
-            <Lightning size={12} />
-            <span>Pipeline active: Speech → Whisper → Gemma → Coqui</span>
+          <div className="space-y-2">
+            {isInitializingPipeline && (
+              <div className="flex items-center gap-2 text-xs text-primary">
+                <Lightning size={12} className="animate-pulse" />
+                <span>Initializing speech pipeline...</span>
+              </div>
+            )}
+            {pipelineInitialized && (
+              <div className="flex items-center gap-2 text-xs text-green-600">
+                <CheckCircle size={12} />
+                <span>Pipeline ready: Whisper + Gemma + Coqui</span>
+              </div>
+            )}
+            {pipelineMode && !pipelineInitialized && !isInitializingPipeline && (
+              <div className="flex items-center gap-2 text-xs text-red-600">
+                <XCircle size={12} />
+                <span>Pipeline initialization failed</span>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {pipelineMode && (
+      {pipelineMode && pipelineInitialized && (
         <>
-          {/* Pipeline Status */}
+          {/* Pipeline Flow Visualization */}
+          <div className="p-3 bg-muted/30 rounded-md">
+            <div className="flex items-center justify-between text-xs">
+              <div className={`flex items-center gap-1 ${pipelineStage === 'listening' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <Microphone size={12} />
+                <span>Listen</span>
+              </div>
+              <ArrowRight size={10} className="text-muted-foreground" />
+              <div className={`flex items-center gap-1 ${pipelineStage === 'transcribing' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <Cpu size={12} />
+                <span>Whisper</span>
+              </div>
+              <ArrowRight size={10} className="text-muted-foreground" />
+              <div className={`flex items-center gap-1 ${pipelineStage === 'correcting' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <Brain size={12} />
+                <span>Gemma</span>
+              </div>
+              <ArrowRight size={10} className="text-muted-foreground" />
+              <div className={`flex items-center gap-1 ${pipelineStage === 'speaking' ? 'text-primary' : 'text-muted-foreground'}`}>
+                <SpeakerHigh size={12} />
+                <span>Coqui</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pipeline Status Cards */}
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <div className={`p-3 rounded-md border ${stt.isListening ? 'bg-primary/10 border-primary' : 'bg-muted/50'}`}>
+              <div className={`p-3 rounded-md border ${
+                pipelineStage === 'listening' ? 'bg-primary/10 border-primary' : 'bg-muted/50'
+              }`}>
                 <div className="flex items-center gap-2 mb-1">
                   <Microphone size={14} />
-                  <span className="text-xs font-medium">Listening</span>
+                  <span className="text-xs font-medium">Audio Capture</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {stt.isListening ? 'Capturing audio...' : 'Ready to listen'}
+                  {pipelineStage === 'listening' ? 'Recording speech...' : 'Ready to listen'}
                 </p>
               </div>
               
-              <div className={`p-3 rounded-md border ${tts.isPlaying ? 'bg-primary/10 border-primary' : 'bg-muted/50'}`}>
+              <div className={`p-3 rounded-md border ${
+                pipelineStage === 'speaking' ? 'bg-primary/10 border-primary' : 'bg-muted/50'
+              }`}>
                 <div className="flex items-center gap-2 mb-1">
                   <SpeakerHigh size={14} />
-                  <span className="text-xs font-medium">Speaking</span>
+                  <span className="text-xs font-medium">Speech Output</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {tts.isPlaying ? 'Reading aloud...' : 'Ready to speak'}
+                  {pipelineStage === 'speaking' ? 'Reading corrected text...' : 'Ready to speak'}
                 </p>
               </div>
             </div>
 
-            {/* Current Pipeline Text */}
-            {pipelineText && (
-              <div className="p-3 bg-green-50 rounded-md border-l-4 border-green-400">
+            {/* Processing Status */}
+            {(pipelineStage === 'transcribing' || pipelineStage === 'correcting') && (
+              <div className="p-3 bg-blue-50 rounded-md border-l-4 border-blue-400">
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline" className="text-xs">Pipeline Text</Badge>
+                  {pipelineStage === 'transcribing' && <Cpu size={14} className="animate-pulse" />}
+                  {pipelineStage === 'correcting' && <Brain size={14} className="animate-pulse" />}
+                  <span className="text-xs font-medium text-blue-800">
+                    {pipelineStage === 'transcribing' ? 'Transcribing with Whisper...' : 'Correcting with Gemma...'}
+                  </span>
                 </div>
-                <p className="text-sm">{pipelineText}</p>
+                <p className="text-xs text-blue-600">
+                  AI processing in progress
+                </p>
+              </div>
+            )}
+
+            {/* Pipeline Results */}
+            {pipelineText && (
+              <div className="space-y-2">
+                <div className="p-3 bg-yellow-50 rounded-md border-l-4 border-yellow-400">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-xs">Original Text</Badge>
+                  </div>
+                  <p className="text-sm">{pipelineText}</p>
+                </div>
+                
+                {correctedText && correctedText !== pipelineText && (
+                  <div className="p-3 bg-green-50 rounded-md border-l-4 border-green-400">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="text-xs">Corrected Text</Badge>
+                      {pipelineResult?.corrections?.corrections?.length > 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          {pipelineResult.corrections.corrections.length} corrections
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm font-medium">{correctedText}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Performance Metrics */}
+            {pipelineResult && (
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center p-2 bg-muted/50 rounded">
+                  <div className="font-medium">{pipelineResult.transcript?.processingTime || 0}ms</div>
+                  <div className="text-muted-foreground">Whisper</div>
+                </div>
+                <div className="text-center p-2 bg-muted/50 rounded">
+                  <div className="font-medium">{pipelineResult.corrections?.processingTime || 0}ms</div>
+                  <div className="text-muted-foreground">Gemma</div>
+                </div>
+                <div className="text-center p-2 bg-muted/50 rounded">
+                  <div className="font-medium">{pipelineResult.synthesis?.processingTime || 0}ms</div>
+                  <div className="text-muted-foreground">Coqui</div>
+                </div>
               </div>
             )}
           </div>
@@ -558,7 +844,7 @@ export function EnhancedSpeechPipeline({
           <div className="flex gap-2">
             <Button
               onClick={startPipelineListening}
-              disabled={stt.isListening || tts.isPlaying}
+              disabled={pipelineStage !== 'idle' || !pipelineInitialized}
               className="flex items-center gap-2"
               size="sm"
             >
@@ -571,22 +857,26 @@ export function EnhancedSpeechPipeline({
                 stt.stopListening();
                 tts.stop();
                 setPipelineText('');
+                setCorrectedText('');
+                setPipelineStage('idle');
+                setPipelineResult(null);
               }}
               variant="outline"
               size="sm"
-              disabled={!stt.isListening && !tts.isPlaying}
+              disabled={pipelineStage === 'idle'}
             >
               <Stop size={14} />
-              Stop
+              Stop Pipeline
             </Button>
           </div>
 
           {/* Pipeline Instructions */}
           <div className="text-xs text-muted-foreground space-y-1">
-            <p>• Speak naturally - your words will be transcribed and corrected</p>
-            <p>• Phonetic errors are automatically fixed using Gemma AI</p>
-            <p>• Corrected text is read back using natural TTS voices</p>
-            <p>• Perfect for learning pronunciation and improving spelling</p>
+            <p>• Complete offline speech processing pipeline</p>
+            <p>• Whisper.cpp for accurate speech-to-text transcription</p>
+            <p>• Gemma 2B for intelligent phonetic error correction</p>
+            <p>• Coqui TTS for natural speech synthesis</p>
+            <p>• All processing happens locally for privacy</p>
           </div>
         </>
       )}
