@@ -1,20 +1,27 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { usePhonoEngine } from "@/hooks/use-phono-engine";
+import { useElectron } from "@/hooks/use-electron";
 import { SuggestionCard } from "@/components/SuggestionCard";
 import { TextToSpeech } from "@/components/TextToSpeech";
+import { SpeechToText } from "@/components/SpeechToText";
+import { VirtualKeyboard } from "@/components/VirtualKeyboard";
 import { LearningStats } from "@/components/LearningStats";
-import { Brain, Lightbulb, RotateCcw } from "@phosphor-icons/react";
+import { Brain, Lightbulb, RotateCcw, Download, Upload, Keyboard, Microphone } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 const EXAMPLE_TEXT = "I recieve your fone call about the seperate meetng. Would of been nice to no earlier. Definately going thru the new fisiscs problems.";
 
 function App() {
   const [text, setText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [showSpeechToText, setShowSpeechToText] = useState(false);
+  
   const {
     suggestions,
     isAnalyzing,
@@ -24,6 +31,16 @@ function App() {
     getConfidenceLabel,
     userPreferences
   } = usePhonoEngine(text);
+
+  const {
+    isElectron,
+    platform,
+    showNotification,
+    saveFile,
+    openFile,
+    useMenuActions,
+    shortcuts
+  } = useElectron();
 
   const handleAcceptSuggestion = (suggestion: any) => {
     const newText = applySuggestion(suggestion, text);
@@ -47,6 +64,119 @@ function App() {
     toast.info("Text cleared");
   };
 
+  // Handle file operations
+  const handleSave = async () => {
+    if (!text.trim()) {
+      toast.error("No text to save");
+      return;
+    }
+
+    const result = await saveFile(text, "phonocorrect-document.txt");
+    if (result.success) {
+      toast.success("Document saved successfully");
+      showNotification("PhonoCorrect AI", "Document saved successfully");
+    } else if (!result.canceled) {
+      toast.error(result.error || "Failed to save document");
+    }
+  };
+
+  const handleOpen = async () => {
+    const result = await openFile();
+    if (result.success && result.content) {
+      setText(result.content);
+      toast.success("Document loaded successfully");
+      showNotification("PhonoCorrect AI", "Document loaded successfully");
+    } else if (!result.canceled) {
+      toast.error(result.error || "Failed to open document");
+    }
+  };
+
+  // Handle speech to text
+  const handleTranscript = (transcript: string) => {
+    setText(transcript);
+    toast.success("Speech transcribed successfully");
+  };
+
+  const handleAppendTranscript = (transcript: string) => {
+    setText(prev => prev + transcript);
+  };
+
+  // Handle virtual keyboard
+  const handleKeyboardInput = (input: string) => {
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newText = text.slice(0, start) + input + text.slice(end);
+      setText(newText);
+      
+      // Set cursor position after inserted text
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + input.length, start + input.length);
+      }, 0);
+    } else {
+      setText(prev => prev + input);
+    }
+  };
+
+  const handleSpecialKey = (key: string) => {
+    if (!textareaRef.current) return;
+    
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    switch (key) {
+      case 'Backspace':
+        if (start > 0) {
+          const newText = text.slice(0, start - 1) + text.slice(end);
+          setText(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start - 1, start - 1);
+          }, 0);
+        }
+        break;
+      case 'Enter':
+        handleKeyboardInput('\n');
+        break;
+      case 'Tab':
+        handleKeyboardInput('\t');
+        break;
+      case 'ArrowLeft':
+        textarea.focus();
+        textarea.setSelectionRange(Math.max(0, start - 1), Math.max(0, start - 1));
+        break;
+      case 'ArrowRight':
+        textarea.focus();
+        textarea.setSelectionRange(Math.min(text.length, start + 1), Math.min(text.length, start + 1));
+        break;
+      case 'ArrowUp':
+      case 'ArrowDown':
+        // Handle line navigation
+        textarea.focus();
+        break;
+    }
+  };
+
+  // Setup Electron menu handlers
+  useMenuActions({
+    'new-document': () => setText(""),
+    'save-document': handleSave,
+    'open-document': handleOpen,
+    'clear-text': clearText,
+    'start-dictation': () => setShowSpeechToText(true),
+    'toggle-dictation': () => setShowSpeechToText(!showSpeechToText),
+    'global-dictation': () => setShowSpeechToText(true),
+    'toggle-keyboard': () => setShowKeyboard(!showKeyboard),
+    'global-keyboard': () => setShowKeyboard(!showKeyboard),
+    'read-aloud': () => {
+      // Trigger text-to-speech - this will be handled by TextToSpeech component
+      toast.info("Use the Read Aloud controls below");
+    }
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -57,11 +187,21 @@ function App() {
               <Brain size={32} className="text-primary" />
             </div>
             <h1 className="text-3xl font-bold">PhonoCorrect AI</h1>
+            {isElectron && (
+              <Badge variant="outline" className="ml-2">
+                Desktop App
+              </Badge>
+            )}
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             A phonetic spelling assistant that helps you write with confidence. 
             Get intelligent suggestions based on how words sound, not just how they're spelled.
           </p>
+          {isElectron && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Shortcuts: {shortcuts.dictation} (Dictation) • {shortcuts.keyboard} (Keyboard) • {shortcuts.save} (Save)
+            </p>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -91,11 +231,48 @@ function App() {
                     >
                       <RotateCcw size={14} />
                     </Button>
+                    {isElectron && (
+                      <>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={handleSave}
+                          className="text-xs"
+                        >
+                          <Download size={14} />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={handleOpen}
+                          className="text-xs"
+                        >
+                          <Upload size={14} />
+                        </Button>
+                      </>
+                    )}
+                    <Button 
+                      size="sm" 
+                      variant={showSpeechToText ? "default" : "outline"}
+                      onClick={() => setShowSpeechToText(!showSpeechToText)}
+                      className="text-xs"
+                    >
+                      <Microphone size={14} />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant={showKeyboard ? "default" : "outline"}
+                      onClick={() => setShowKeyboard(!showKeyboard)}
+                      className="text-xs"
+                    >
+                      <Keyboard size={14} />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <Textarea
+                  ref={textareaRef}
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Start typing your message here. Try words like 'fone', 'seperate', or 'recieve' to see phonetic corrections..."
@@ -150,6 +327,23 @@ function App() {
 
             {/* Text-to-Speech */}
             {text.trim() && <TextToSpeech text={text} />}
+
+            {/* Speech-to-Text */}
+            {showSpeechToText && (
+              <SpeechToText 
+                onTranscript={handleTranscript}
+                onAppendTranscript={handleAppendTranscript}
+              />
+            )}
+
+            {/* Virtual Keyboard */}
+            {showKeyboard && (
+              <VirtualKeyboard
+                onInput={handleKeyboardInput}
+                onSpecialKey={handleSpecialKey}
+                targetRef={textareaRef}
+              />
+            )}
           </div>
 
           {/* Sidebar */}
