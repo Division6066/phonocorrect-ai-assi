@@ -69,6 +69,21 @@
 - **Purpose**: Assists users in proofreading and understanding their written content
 - **Success Criteria**: Clear speech synthesis, intuitive controls, natural pacing
 
+### 7. ML Model Integrations (NEW)
+- **Functionality**: Whisper STT for real speech processing and Gemma 2B for advanced phonetic correction
+- **Purpose**: Provides production-grade speech recognition and AI-powered text enhancement
+- **Success Criteria**: <100ms inference time, 94%+ accuracy, support for 12+ languages
+
+### 8. Cloud Sync & Premium Features (NEW)
+- **Functionality**: Firebase authentication, cloud data sync, Stripe integration for premium subscriptions
+- **Purpose**: Multi-device synchronization and premium feature unlocking ($5/month tier)
+- **Success Criteria**: Seamless cross-device sync, secure payment processing, premium feature gating
+
+### 9. Mobile Apps & Chrome Extension Deployment (NEW)
+- **Functionality**: iOS/Android apps via app stores, Chrome extension via Web Store
+- **Purpose**: Extends PhonoCorrect AI to mobile devices and browser-based writing
+- **Success Criteria**: Successful app store approval, extension Web Store publication, feature parity
+
 ## Design Direction
 
 ### Visual Tone & Identity
@@ -144,43 +159,57 @@
 
 **Scalability Needs**: 
 - Architecture supports additional language packs
-- ML model integration points for future on-device processing
+- ML model integration points for on-device processing (Whisper + Gemma)
 - Plugin system for custom correction patterns
+- Cloud infrastructure for premium features and multi-device sync
+- Mobile app deployment pipeline for iOS and Android
+- Chrome extension publishing and auto-updates
 
 **Testing Focus**: 
-- Cross-platform compatibility (Windows, macOS, Linux)
+- Cross-platform compatibility (Windows, macOS, Linux, iOS, Android, Chrome)
 - Language accuracy testing with native speakers
 - Accessibility testing with assistive technologies
-- Performance testing with large documents
+- Performance testing with large documents and ML model inference
+- Cloud sync reliability and data consistency testing
+- Premium feature payment flow testing
 
 **Critical Questions**: 
-- How will offline functionality be implemented for desktop app?
-- What's the strategy for expanding language support?
-- How will user privacy be maintained with speech processing?
+- How will offline ML model inference perform on various device specs?
+- What's the strategy for expanding language support across all platforms?
+- How will user privacy be maintained with cloud sync and speech processing?
+- What's the rollback strategy if app store submissions are rejected?
+- How will premium features be enforced across different platforms?
 
 ## Technical Architecture
 
 ### Core Technologies
 - **Frontend**: React 19, TypeScript, Tailwind CSS
 - **Desktop**: Electron with native OS integration
-- **Speech Processing**: Web Speech API with fallback support
+- **Speech Processing**: Web Speech API with Whisper.cpp integration
+- **ML Models**: Gemma 2B (4-bit quantized), Whisper (base/small models)
+- **Cloud Services**: Firebase (Auth, Firestore), Stripe (payments)
 - **Build System**: Vite for fast development and optimized builds
 - **Component Library**: Shadcn/ui for consistent, accessible components
 
 ### Cross-Platform Support
 - **Web Application**: Modern browser compatibility
 - **Desktop Application**: Electron for Windows, macOS, and Linux
-- **Future Mobile**: React Native foundation ready
+- **Mobile Applications**: React Native for iOS and Android
+- **Browser Extension**: Chrome Extension (Manifest V3) with React + Vite
 
 ### Data & Privacy
-- **Local Storage**: Browser localStorage and Electron file system
-- **User Preferences**: Persistent settings and learning data
-- **Privacy**: All processing client-side, no speech data transmitted
+- **Local Storage**: Browser localStorage, Electron file system, and persistent KV store
+- **Cloud Storage**: Firebase Firestore for premium users with end-to-end encryption
+- **User Preferences**: Persistent settings and learning data with cloud sync
+- **Privacy**: Local ML processing priority, optional cloud fallback for premium users
+- **ML Models**: On-device inference with WebAssembly/native bindings
 
 ## Reflection
 
-This approach uniquely combines multiple accessibility modalities (visual, auditory, motor) in a single application, making it exceptionally inclusive. The multi-language support and cross-platform architecture ensure broad usability across diverse user needs and technical environments.
+This approach uniquely combines multiple accessibility modalities (visual, auditory, motor) in a single application, making it exceptionally inclusive. The multi-language support and comprehensive cross-platform architecture (web, desktop, mobile, browser extension) ensure broad usability across diverse user needs and technical environments.
 
-The focus on phonetic understanding rather than traditional spell-checking creates a truly supportive experience for users with learning differences, while the comprehensive input methods (typing, speech, virtual keyboard) provide flexibility for various capabilities and preferences.
+The integration of production-grade ML models (Whisper, Gemma) elevates the application beyond basic spell-checking to provide truly intelligent language assistance. The premium cloud sync features create a sustainable business model while maintaining privacy through local-first processing.
 
-The desktop application integration elevates this beyond a simple web tool to a comprehensive writing assistant that can integrate into users' daily workflows across all their applications.
+The focus on phonetic understanding rather than traditional spell-checking creates a truly supportive experience for users with learning differences, while the comprehensive input methods and deployment targets provide unprecedented accessibility across all computing platforms.
+
+The multi-platform deployment strategy (iOS App Store, Google Play, Chrome Web Store) positions PhonoCorrect AI as a comprehensive solution that follows users across their entire digital workflow, from mobile writing to desktop document creation to web-based text input.
