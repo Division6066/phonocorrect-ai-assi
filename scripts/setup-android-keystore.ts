@@ -1,11 +1,11 @@
 #!/usr/bin/env tsx
-/**
+ * 
  * Android Keystore Setup Script
  * Generates keystore for Android app signing and provides Google Play service account setup
- */
+imp
 
-import fs from 'fs';
-import path from 'path';
+
+  alias: string;
 import { execSync } from 'child_process';
 import crypto from 'crypto';
 
@@ -62,70 +62,70 @@ class AndroidKeystoreSetup {
     const appName = 'phonocorrectai';
     const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     
-    return {
-      alias: `${appName}-key-alias`,
-      keystore: `${appName}-release-key-${timestamp}.keystore`,
-      storePassword: this.generateSecurePassword(),
-      keyPassword: this.generateSecurePassword(),
-      validity: 10000, // ~27 years
-      keysize: 2048,
-      keyalg: 'RSA',
-      dname: 'CN=PhonoCorrect AI, OU=Development, O=PhonoCorrect AI, L=San Francisco, ST=CA, C=US'
-    };
+      keysiz
+      dname: 'CN=PhonoCorrect AI, OU
   }
-
   /**
-   * Generate Android keystore
    */
-  public generateKeystore(): KeystoreConfig {
-    const config = this.generateKeystoreConfig();
-    const keystorePath = path.join(this.keystoreDir, config.keystore);
+    const config = this.generateKey
 
-    console.log('🔐 Generating Android keystore...');
-    console.log(`📁 Keystore location: ${keystorePath}`);
-
+    console.log(`📁 
     // Check if keytool is available
-    try {
-      execSync('keytool -help', { stdio: 'pipe' });
-    } catch (error) {
-      throw new Error('keytool not found. Please install Java JDK 8 or higher.');
-    }
+      
+   
 
-    // Generate keystore
-    const keytoolCommand = [
-      'keytool',
+    c
       '-genkey',
-      '-v',
-      `-keystore "${keystorePath}"`,
-      `-alias "${config.alias}"`,
+     
       `-keyalg ${config.keyalg}`,
-      `-keysize ${config.keysize}`,
       `-validity ${config.validity}`,
-      `-storepass "${config.storePassword}"`,
       `-keypass "${config.keyPassword}"`,
-      `-dname "${config.dname}"`
-    ].join(' ');
 
     try {
-      execSync(keytoolCommand, { stdio: 'pipe' });
       console.log('✅ Keystore generated successfully!');
-    } catch (error) {
-      throw new Error(`Failed to generate keystore: ${error}`);
-    }
 
-    // Save configuration securely
-    this.saveKeystoreConfig(config);
-    
+
+    this.
     return config;
-  }
 
-  /**
    * Save keystore configuration
+  pri
+
+    const publicConfig =
+      keystore: config.keyst
+      keysize: c
+      dname: con
+    };
+    fs.writeFileSync(configPath, JSO
+    // Save environment template
+    const envTemplate = `# Androi
+# NEVER commit actual passwords to 
+ANDROID_KEYSTORE_PATH=${config.keysto
+ANDROID_STORE_PASSWORD=${config.storePassword
+
+# Generate with: base64 -i ${con
+
+
+
+    console.log('📝 Configuration saved to:', conf
+  }
+  /**
    */
-  private saveKeystoreConfig(config: KeystoreConfig): void {
-    const configPath = path.join(this.configDir, 'keystore.json');
-    
-    // Save configuration (without passwords for security)
+    c
+
+## 1. Create Google Play Console A
+1. Visit [Google Play Console](https
+3. C
+## 2. Create Servi
+1. 
+
+   - 
+5. Grant the service account the
+
+
+2. Find your service account and click **Grant Access**
+   -
+
     const publicConfig = {
       alias: config.alias,
       keystore: config.keystore,
@@ -254,123 +254,122 @@ For enhanced security, use Play App Signing:
 1. Configure fastlane for automated deployment
 2. Set up automated testing pipeline
 3. Configure release tracks (internal → alpha → beta → production)
-4. Set up crash reporting and analytics
-`;
-
-    fs.writeFileSync(setupPath, setupInstructions);
-    console.log('📖 Google Play setup instructions saved to:', setupPath);
-  }
+      
+  
 
   /**
-   * Generate Gradle signing configuration
    */
-  public generateGradleConfig(config: KeystoreConfig): void {
-    const gradleConfigPath = path.join(this.configDir, 'signing.gradle');
-    
-    const gradleConfig = `// Android Signing Configuration
-// Add this to your app/build.gradle file
+   
 
-android {
-    signingConfigs {
-        debug {
-            storeFile file("../keystores/debug.keystore")
-            storePassword "android"
-            keyAlias "androiddebugkey"
-            keyPassword "android"
-        }
-        release {
-            storeFile file("../keystores/${config.keystore}")
-            storePassword System.getenv("ANDROID_STORE_PASSWORD") ?: project.findProperty("ANDROID_STORE_PASSWORD")
-            keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: project.findProperty("ANDROID_KEY_ALIAS")
-            keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: project.findProperty("ANDROID_KEY_PASSWORD")
-        }
-    }
-
-    buildTypes {
-        debug {
-            signingConfig signingConfigs.debug
-            applicationIdSuffix ".debug"
-            versionNameSuffix "-debug"
-            debuggable true
-        }
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            debuggable false
-        }
-    }
-}
-`;
-
-    fs.writeFileSync(gradleConfigPath, gradleConfig);
-    console.log('⚙️ Gradle signing configuration saved to:', gradleConfigPath);
-  }
-
-  /**
-   * Verify keystore
-   */
-  public verifyKeystore(keystorePath: string, storePassword: string): void {
-    console.log('🔍 Verifying keystore...');
-    
-    try {
-      const verifyCommand = `keytool -list -v -keystore "${keystorePath}" -storepass "${storePassword}"`;
-      const output = execSync(verifyCommand, { encoding: 'utf8' });
-      
-      console.log('✅ Keystore verification successful!');
-      
-      // Extract and display key fingerprint
-      const fingerprintMatch = output.match(/SHA256: ([A-F0-9:]+)/);
-      if (fingerprintMatch) {
-        console.log('🔑 Key fingerprint (SHA256):', fingerprintMatch[1]);
-      }
-      
-    } catch (error) {
-      throw new Error(`Keystore verification failed: ${error}`);
-    }
-  }
-
-  /**
-   * Main setup function
-   */
-  public async setup(): Promise<void> {
-    try {
-      console.log('🚀 Starting Android keystore setup...\n');
-      
-      // Generate keystore
-      const config = this.generateKeystore();
-      
-      // Generate additional configuration files
-      this.generateGradleConfig(config);
-      this.generatePlayConsoleSetup();
-      
+     
+      // Generate additional configuration
+     
       // Verify keystore
-      const keystorePath = path.join(this.keystoreDir, config.keystore);
       this.verifyKeystore(keystorePath, config.storePassword);
-      
-      console.log('\n✅ Android keystore setup completed successfully!');
-      console.log('\n📋 Next steps:');
-      console.log('1. Review the generated configuration files');
-      console.log('2. Follow the Google Play Console setup instructions');
-      console.log('3. Add the required secrets to your CI/CD environment');
-      console.log('4. Test the signing process with a debug build');
-      
-      console.log('\n⚠️ Security reminders:');
-      console.log('- Backup your keystore file securely');
-      console.log('- Never commit keystore or passwords to version control');
-      console.log('- Store passwords in encrypted environment variables');
-      
-    } catch (error) {
-      console.error('❌ Setup failed:', error.message);
+    
+      console.log('1. Review the generated configuration f
+      console.log('3. Add the required se
+
+      con
+      console.log('-
+    } catch (er
       process.exit(1);
-    }
   }
-}
 
-// Run setup if called directly
 if (require.main === module) {
-  const setup = new AndroidKeystoreSetup();
-  setup.setup();
-}
+  setup.s
 
-export default AndroidKeystoreSetup;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
