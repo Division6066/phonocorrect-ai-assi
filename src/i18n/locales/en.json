@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "PhonoCorrect AI",
+    "subtitle": "A phonetic spelling assistant that helps you write with confidence. Get intelligent suggestions based on how words sound, not just how they're spelled.",
+    "desktop": "Desktop App",
+    "shortcuts": "Shortcuts",
+    "shortcuts_help": "{{dictation}} (Dictation) • {{keyboard}} (Keyboard) • {{save}} (Save)"
+  },
+  "tabs": {
+    "writing": "Writing",
+    "hardware": "Hardware",
+    "ml_models": "ML Models",
+    "cloud_premium": "Cloud & Premium",
+    "deployment": "Deployment"
+  },
+  "writing": {
+    "title": "Writing Area",
+    "placeholder": "Start typing your message here. Try words like 'fone', 'seperate', or 'recieve' to see phonetic corrections...",
+    "load_example": "Load Example",
+    "clear": "Clear",
+    "save": "Save",
+    "open": "Open",
+    "words_count": "{{count}} words",
+    "suggestions_count": "{{count}} suggestion",
+    "suggestions_count_plural": "{{count}} suggestions",
+    "analyzing": "Analyzing...",
+    "suggestions_title": "Phonetic Suggestions"
+  },
+  "speech": {
+    "title": "Speech to Text",
+    "start_listening": "Start Listening",
+    "stop_listening": "Stop Listening",
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "language": "Language",
+    "continuous": "Continuous Mode",
+    "append": "Append to Text",
+    "replace": "Replace Text",
+    "clear_transcript": "Clear",
+    "apply_transcript": "Apply"
+  },
+  "tts": {
+    "title": "Text to Speech",
+    "read_aloud": "Read Aloud",
+    "stop": "Stop",
+    "pause": "Pause",
+    "resume": "Resume",
+    "voice": "Voice",
+    "speed": "Speed",
+    "pitch": "Pitch",
+    "volume": "Volume",
+    "reading": "Reading...",
+    "paused": "Paused"
+  },
+  "keyboard": {
+    "title": "Virtual Keyboard",
+    "layout": "Layout",
+    "layouts": {
+      "qwerty": "QWERTY",
+      "azerty": "AZERTY",
+      "qwertz": "QWERTZ",
+      "dvorak": "Dvorak"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "voice_settings": "Voice Settings",
+    "ml_settings": "ML Settings",
+    "save": "Save Settings",
+    "reset": "Reset to Defaults"
+  },
+  "suggestions": {
+    "confidence": "Confidence",
+    "accept": "Accept",
+    "reject": "Reject",
+    "confidence_levels": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    }
+  },
+  "premium": {
+    "title": "Premium Account",
+    "upgrade": "Upgrade to Premium",
+    "features": {
+      "cloud_sync": "Cloud Sync",
+      "advanced_ml": "Advanced ML Models",
+      "unlimited": "Unlimited Usage",
+      "priority_support": "Priority Support"
+    },
+    "price": "$5/month",
+    "current_plan": "Current Plan",
+    "free": "Free",
+    "premium": "Premium"
+  },
+  "models": {
+    "title": "ML Models",
+    "whisper": "Whisper Models",
+    "gemma": "Gemma Models",
+    "coqui": "Coqui TTS",
+    "download": "Download",
+    "downloading": "Downloading...",
+    "ready": "Ready",
+    "not_available": "Not Available",
+    "size": "Size",
+    "accuracy": "Accuracy",
+    "speed": "Speed"
+  },
+  "deployment": {
+    "title": "Deployment",
+    "platforms": {
+      "mobile": "Mobile Apps",
+      "desktop": "Desktop Apps",
+      "web": "Web App",
+      "extension": "Browser Extension"
+    },
+    "status": {
+      "ready": "Ready",
+      "building": "Building",
+      "error": "Error",
+      "not_configured": "Not Configured"
+    }
+  },
+  "help": {
+    "title": "How It Works",
+    "steps": {
+      "type": {
+        "title": "1. Type Naturally",
+        "description": "Write how words sound to you. Don't worry about perfect spelling."
+      },
+      "suggestions": {
+        "title": "2. Get Smart Suggestions",
+        "description": "Our AI recognizes phonetic patterns and suggests corrections."
+      },
+      "learn": {
+        "title": "3. Learn Together",
+        "description": "Accept or reject suggestions to teach the system your preferences."
+      }
+    }
+  },
+  "patterns": {
+    "title": "Common Patterns",
+    "examples": {
+      "phone": "phone",
+      "separate": "separate",
+      "receive": "receive",
+      "would_have": "would have"
+    }
+  },
+  "features": {
+    "title": "New Features",
+    "whisper_gemma": "Whisper & Gemma ML integration",
+    "cloud_sync": "Cloud sync & premium features",
+    "mobile_extension": "Mobile app & Chrome extension",
+    "explore": "Explore Features"
+  },
+  "notifications": {
+    "example_loaded": "Loaded example text with common phonetic errors",
+    "text_cleared": "Text cleared",
+    "suggestion_applied": "Applied suggestion: {{original}} → {{suggestion}}",
+    "suggestion_rejected": "Rejected suggestion for \"{{original}}\"",
+    "no_text_to_save": "No text to save",
+    "document_saved": "Document saved successfully",
+    "document_loaded": "Document loaded successfully",
+    "save_failed": "Failed to save document",
+    "load_failed": "Failed to open document",
+    "speech_transcribed": "Speech transcribed successfully",
+    "use_read_aloud": "Use the Read Aloud controls below"
+  },
+  "errors": {
+    "speech_not_supported": "Speech recognition not supported in this browser",
+    "microphone_access": "Microphone access denied",
+    "speech_error": "Speech recognition error",
+    "tts_not_supported": "Text-to-speech not supported in this browser",
+    "model_load_failed": "Failed to load ML model",
+    "network_error": "Network error occurred"
+  }
+}

@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePhonoEngine } from "@/hooks/use-phono-engine";
 import { useElectron } from "@/hooks/use-electron";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { SuggestionCard } from "@/components/SuggestionCard";
 import { TextToSpeech } from "@/components/TextToSpeech";
 import { SpeechToText } from "@/components/SpeechToText";
@@ -18,12 +19,23 @@ import { MLModelsPanel } from "@/components/MLModelsPanel";
 import { CloudSyncPanel } from "@/components/CloudSyncPanel";
 import { DeploymentPanel } from "@/components/DeploymentPanel";
 import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
-import { Brain, Lightbulb, RotateCcw, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Zap } from "@phosphor-icons/react";
+import { LanguageSettingsPanel } from "@/components/LanguageSettingsPanel";
+import { Brain, Lightbulb, RotateCcw, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Zap, Globe } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
-const EXAMPLE_TEXT = "I recieve your fone call about the seperate meetng. Would of been nice to no earlier. Definately going thru the new fisiscs problems.";
+// Multi-language example texts
+const EXAMPLE_TEXTS = {
+  en: "I recieve your fone call about the seperate meetng. Would of been nice to no earlier. Definately going thru the new fisiscs problems.",
+  es: "Resivió tu téléfono llamada sobre la reunión separar. Habría estado bien saber antes. Definitamente pasando por los nuevos problemas de física.",
+  fr: "J'ai resu votre téléfone appel à propos de la réunion séparer. Ça aurait été bien de savoir plus tôt. Définitivement en passant par les nouveaux problèmes de fisique.",
+  de: "Ich habe Ihren téléfon Anruf über das getrennte Treffen erhalten. Wäre schön gewesen, es früher zu wissen. Definitiv durch die neuen fisik Probleme.",
+  he: "קיבלתי את הטלפון שלך על הפגישה הנפרדת. היה נחמד לדעת קודם. בהחלט עובר דרך בעיות הפיזיקה החדשות.",
+  ar: "استلمت هاتفك المكالمة حول الاجتماع المنفصل. كان سيكون من الجميل معرفة ذلك في وقت سابق. بالتأكيد أمر عبر مشاكل الفيزياء الجديدة.",
+  zh: "我收到了您的电话呼叫关于分开的会议。早点知道会很好。绝对通过新的物理问题。"
+};
 
 function App() {
+  const { currentLanguage, t } = useLanguage();
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [showKeyboard, setShowKeyboard] = useState(false);
@@ -57,37 +69,41 @@ function App() {
     const newText = applySuggestion(suggestion, text);
     setText(newText);
     recordFeedback(suggestion.pattern, true);
-    toast.success(`Applied suggestion: ${suggestion.original} → ${suggestion.suggestion}`);
+    toast.success(t('notifications.suggestion_applied', { 
+      original: suggestion.original, 
+      suggestion: suggestion.suggestion 
+    }));
   };
 
   const handleRejectSuggestion = (suggestion: any) => {
     recordFeedback(suggestion.pattern, false);
-    toast.info(`Rejected suggestion for "${suggestion.original}"`);
+    toast.info(t('notifications.suggestion_rejected', { original: suggestion.original }));
   };
 
   const loadExample = () => {
-    setText(EXAMPLE_TEXT);
-    toast.info("Loaded example text with common phonetic errors");
+    const exampleText = EXAMPLE_TEXTS[currentLanguage] || EXAMPLE_TEXTS.en;
+    setText(exampleText);
+    toast.info(t('notifications.example_loaded'));
   };
 
   const clearText = () => {
     setText("");
-    toast.info("Text cleared");
+    toast.info(t('notifications.text_cleared'));
   };
 
   // Handle file operations
   const handleSave = async () => {
     if (!text.trim()) {
-      toast.error("No text to save");
+      toast.error(t('notifications.no_text_to_save'));
       return;
     }
 
     const result = await saveFile(text, "phonocorrect-document.txt");
     if (result.success) {
-      toast.success("Document saved successfully");
-      showNotification("PhonoCorrect AI", "Document saved successfully");
+      toast.success(t('notifications.document_saved'));
+      showNotification("PhonoCorrect AI", t('notifications.document_saved'));
     } else if (!result.canceled) {
-      toast.error(result.error || "Failed to save document");
+      toast.error(result.error || t('notifications.save_failed'));
     }
   };
 
@@ -95,17 +111,17 @@ function App() {
     const result = await openFile();
     if (result.success && result.content) {
       setText(result.content);
-      toast.success("Document loaded successfully");
-      showNotification("PhonoCorrect AI", "Document loaded successfully");
+      toast.success(t('notifications.document_loaded'));
+      showNotification("PhonoCorrect AI", t('notifications.document_loaded'));
     } else if (!result.canceled) {
-      toast.error(result.error || "Failed to open document");
+      toast.error(result.error || t('notifications.load_failed'));
     }
   };
 
   // Handle speech to text
   const handleTranscript = (transcript: string) => {
     setText(transcript);
-    toast.success("Speech transcribed successfully");
+    toast.success(t('notifications.speech_transcribed'));
   };
 
   const handleAppendTranscript = (transcript: string) => {
@@ -184,7 +200,7 @@ function App() {
     'global-keyboard': () => setShowKeyboard(!showKeyboard),
     'read-aloud': () => {
       // Trigger text-to-speech - this will be handled by TextToSpeech component
-      toast.info("Use the Read Aloud controls below");
+      toast.info(t('notifications.use_read_aloud'));
     }
   });
 
@@ -197,10 +213,10 @@ function App() {
             <div className="p-3 bg-primary/10 rounded-full">
               <Brain size={32} className="text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">PhonoCorrect AI</h1>
+            <h1 className="text-3xl font-bold">{t('app.title')}</h1>
             {isElectron && (
               <Badge variant="outline" className="ml-2">
-                Desktop App
+                {t('app.desktop')}
               </Badge>
             )}
             {isMLReady && (
@@ -215,12 +231,15 @@ function App() {
             )}
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            A phonetic spelling assistant that helps you write with confidence. 
-            Get intelligent suggestions based on how words sound, not just how they're spelled.
+            {t('app.subtitle')}
           </p>
           {isElectron && (
             <p className="text-xs text-muted-foreground mt-2">
-              Shortcuts: {shortcuts.dictation} (Dictation) • {shortcuts.keyboard} (Keyboard) • {shortcuts.save} (Save)
+              {t('app.shortcuts_help', { 
+                dictation: shortcuts.dictation,
+                keyboard: shortcuts.keyboard,
+                save: shortcuts.save
+              })}
             </p>
           )}
         </div>
@@ -229,26 +248,30 @@ function App() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="writing" className="flex items-center gap-2">
                   <Lightbulb size={14} />
-                  Writing
+                  {t('tabs.writing')}
+                </TabsTrigger>
+                <TabsTrigger value="language" className="flex items-center gap-2">
+                  <Globe size={14} />
+                  Language
                 </TabsTrigger>
                 <TabsTrigger value="acceleration" className="flex items-center gap-2">
                   <Zap size={14} />
-                  Hardware
+                  {t('tabs.hardware')}
                 </TabsTrigger>
                 <TabsTrigger value="ml-models" className="flex items-center gap-2">
                   <Cpu size={14} />
-                  ML Models
+                  {t('tabs.ml_models')}
                 </TabsTrigger>
                 <TabsTrigger value="cloud-sync" className="flex items-center gap-2">
                   <Cloud size={14} />
-                  Cloud & Premium
+                  {t('tabs.cloud_premium')}
                 </TabsTrigger>
                 <TabsTrigger value="deployment" className="flex items-center gap-2">
                   <Rocket size={14} />
-                  Deployment
+                  {t('tabs.deployment')}
                 </TabsTrigger>
               </TabsList>
 
@@ -259,7 +282,7 @@ function App() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2">
                         <Lightbulb size={16} />
-                        Writing Area
+                        {t('writing.title')}
                       </CardTitle>
                       <div className="flex gap-2">
                         <Button 
@@ -268,7 +291,7 @@ function App() {
                           onClick={loadExample}
                           className="text-xs"
                         >
-                          Load Example
+                          {t('writing.load_example')}
                         </Button>
                         <Button 
                           size="sm" 
@@ -322,7 +345,7 @@ function App() {
                       ref={textareaRef}
                       value={text}
                       onChange={(e) => setText(e.target.value)}
-                      placeholder="Start typing your message here. Try words like 'fone', 'seperate', or 'recieve' to see phonetic corrections..."
+                      placeholder={t('writing.placeholder')}
                       className="min-h-[200px] text-base leading-relaxed resize-none"
                     />
                     
@@ -330,11 +353,15 @@ function App() {
                     <div className="mt-4 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="text-sm text-muted-foreground">
-                          {text.trim().split(/\s+/).filter(word => word.length > 0).length} words
+                          {t('writing.words_count', { 
+                            count: text.trim().split(/\s+/).filter(word => word.length > 0).length 
+                          })}
                         </div>
                         {suggestions.length > 0 && (
                           <Badge variant="outline" className="text-primary">
-                            {suggestions.length} suggestion{suggestions.length === 1 ? '' : 's'}
+                            {t(suggestions.length === 1 ? 'writing.suggestions_count' : 'writing.suggestions_count_plural', {
+                              count: suggestions.length
+                            })}
                           </Badge>
                         )}
                       </div>
@@ -342,7 +369,7 @@ function App() {
                       {isAnalyzing && (
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                          <span className="text-sm text-muted-foreground">Analyzing...</span>
+                          <span className="text-sm text-muted-foreground">{t('writing.analyzing')}</span>
                         </div>
                       )}
                     </div>
@@ -354,7 +381,7 @@ function App() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-sm font-medium">
-                        Phonetic Suggestions
+                        {t('writing.suggestions_title')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -394,6 +421,10 @@ function App() {
                 )}
               </TabsContent>
 
+              <TabsContent value="language" className="mt-6">
+                <LanguageSettingsPanel />
+              </TabsContent>
+
               <TabsContent value="acceleration" className="mt-6">
                 <HardwareAccelerationPanel />
               </TabsContent>
@@ -412,8 +443,8 @@ function App() {
             </Tabs>
           </div>
 
-          {/* Sidebar - only visible on writing and acceleration tabs */}
-          {(activeTab === "writing" || activeTab === "acceleration") && (
+          {/* Sidebar - only visible on writing, language and acceleration tabs */}
+          {(activeTab === "writing" || activeTab === "language" || activeTab === "acceleration") && (
             <div className="space-y-6">
               <PremiumAccountCard />
               <LearningStats preferences={userPreferences} />
@@ -421,20 +452,20 @@ function App() {
               {/* Help Card */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium">How It Works</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('help.title')}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground space-y-3">
                   <div>
-                    <h4 className="font-medium text-foreground mb-1">1. Type Naturally</h4>
-                    <p>Write how words sound to you. Don't worry about perfect spelling.</p>
+                    <h4 className="font-medium text-foreground mb-1">{t('help.steps.type.title')}</h4>
+                    <p>{t('help.steps.type.description')}</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-foreground mb-1">2. Get Smart Suggestions</h4>
-                    <p>Our AI recognizes phonetic patterns and suggests corrections.</p>
+                    <h4 className="font-medium text-foreground mb-1">{t('help.steps.suggestions.title')}</h4>
+                    <p>{t('help.steps.suggestions.description')}</p>
                   </div>
                   <div>
-                    <h4 className="font-medium text-foreground mb-1">3. Learn Together</h4>
-                    <p>Accept or reject suggestions to teach the system your preferences.</p>
+                    <h4 className="font-medium text-foreground mb-1">{t('help.steps.learn.title')}</h4>
+                    <p>{t('help.steps.learn.description')}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -442,24 +473,24 @@ function App() {
               {/* Common Patterns */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium">Common Patterns</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('patterns.title')}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">fone</span>
-                    <span className="font-medium">phone</span>
+                    <span className="font-medium">{t('patterns.examples.phone')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">seperate</span>
-                    <span className="font-medium">separate</span>
+                    <span className="font-medium">{t('patterns.examples.separate')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">recieve</span>
-                    <span className="font-medium">receive</span>
+                    <span className="font-medium">{t('patterns.examples.receive')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">would of</span>
-                    <span className="font-medium">would have</span>
+                    <span className="font-medium">{t('patterns.examples.would_have')}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -467,20 +498,20 @@ function App() {
               {/* New Features Preview */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium">New Features</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('features.title')}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm space-y-3">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Cpu size={14} />
-                    <span>Whisper & Gemma ML integration</span>
+                    <span>{t('features.whisper_gemma')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Cloud size={14} />
-                    <span>Cloud sync & premium features</span>
+                    <span>{t('features.cloud_sync')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Rocket size={14} />
-                    <span>Mobile app & Chrome extension</span>
+                    <span>{t('features.mobile_extension')}</span>
                   </div>
                   <Button 
                     size="sm" 
@@ -488,7 +519,7 @@ function App() {
                     onClick={() => setActiveTab("ml-models")}
                     className="w-full mt-2"
                   >
-                    Explore Features
+                    {t('features.explore')}
                   </Button>
                 </CardContent>
               </Card>

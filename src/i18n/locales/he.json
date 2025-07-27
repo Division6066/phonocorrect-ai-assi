@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "PhonoCorrect AI",
+    "subtitle": "עוזר איות פונטי המסייע לכם לכתוב בביטחון. קבלו הצעות חכמות המבוססות על איך מילים נשמעות, לא רק על איך הן נכתבות.",
+    "desktop": "אפליקציית שולחן עבודה",
+    "shortcuts": "קיצורי דרך",
+    "shortcuts_help": "{{dictation}} (הכתבה) • {{keyboard}} (מקלדת) • {{save}} (שמירה)"
+  },
+  "tabs": {
+    "writing": "כתיבה",
+    "hardware": "חומרה",
+    "ml_models": "מודלי ML",
+    "cloud_premium": "ענן ופרמיום",
+    "deployment": "פריסה"
+  },
+  "writing": {
+    "title": "אזור כתיבה",
+    "placeholder": "התחילו להקליד כאן את ההודעה שלכם. נסו מילים כמו 'fone', 'seperate', או 'recieve' כדי לראות תיקונים פונטיים...",
+    "load_example": "טען דוגמה",
+    "clear": "נקה",
+    "save": "שמור",
+    "open": "פתח",
+    "words_count": "{{count}} מילים",
+    "suggestions_count": "{{count}} הצעה",
+    "suggestions_count_plural": "{{count}} הצעות",
+    "analyzing": "מנתח...",
+    "suggestions_title": "הצעות פונטיות"
+  },
+  "speech": {
+    "title": "דיבור לטקסט",
+    "start_listening": "התחל להקשיב",
+    "stop_listening": "הפסק להקשיב",
+    "listening": "מקשיב...",
+    "processing": "מעבד...",
+    "language": "שפה",
+    "continuous": "מצב רציף",
+    "append": "הוסף לטקסט",
+    "replace": "החלף טקסט",
+    "clear_transcript": "נקה",
+    "apply_transcript": "החל"
+  },
+  "tts": {
+    "title": "טקסט לדיבור",
+    "read_aloud": "קרא בקול רם",
+    "stop": "עצור",
+    "pause": "השהה",
+    "resume": "המשך",
+    "voice": "קול",
+    "speed": "מהירות",
+    "pitch": "גובה צליל",
+    "volume": "עוצמת קול",
+    "reading": "קורא...",
+    "paused": "מושהה"
+  },
+  "keyboard": {
+    "title": "מקלדת וירטואלית",
+    "layout": "פריסה",
+    "layouts": {
+      "qwerty": "QWERTY",
+      "azerty": "AZERTY",
+      "qwertz": "QWERTZ",
+      "dvorak": "Dvorak"
+    }
+  },
+  "settings": {
+    "title": "הגדרות",
+    "language": "שפה",
+    "theme": "ערכת נושא",
+    "voice_settings": "הגדרות קול",
+    "ml_settings": "הגדרות ML",
+    "save": "שמור הגדרות",
+    "reset": "אפס לברירת מחדל"
+  },
+  "suggestions": {
+    "confidence": "ביטחון",
+    "accept": "קבל",
+    "reject": "דחה",
+    "confidence_levels": {
+      "high": "גבוה",
+      "medium": "בינוני",
+      "low": "נמוך"
+    }
+  },
+  "premium": {
+    "title": "חשבון פרמיום",
+    "upgrade": "שדרג לפרמיום",
+    "features": {
+      "cloud_sync": "סנכרון ענן",
+      "advanced_ml": "מודלי ML מתקדמים",
+      "unlimited": "שימוש בלתי מוגבל",
+      "priority_support": "תמיכה עדיפה"
+    },
+    "price": "$5/חודש",
+    "current_plan": "התוכנית הנוכחית",
+    "free": "חינם",
+    "premium": "פרמיום"
+  },
+  "models": {
+    "title": "מודלי ML",
+    "whisper": "מודלי Whisper",
+    "gemma": "מודלי Gemma",
+    "coqui": "Coqui TTS",
+    "download": "הורד",
+    "downloading": "מוריד...",
+    "ready": "מוכן",
+    "not_available": "לא זמין",
+    "size": "גודל",
+    "accuracy": "דיוק",
+    "speed": "מהירות"
+  },
+  "deployment": {
+    "title": "פריסה",
+    "platforms": {
+      "mobile": "אפליקציות מובייל",
+      "desktop": "אפליקציות שולחן עבודה",
+      "web": "אפליקציית אינטרנט",
+      "extension": "הרחבת דפדפן"
+    },
+    "status": {
+      "ready": "מוכן",
+      "building": "בונה",
+      "error": "שגיאה",
+      "not_configured": "לא מוגדר"
+    }
+  },
+  "help": {
+    "title": "איך זה עובד",
+    "steps": {
+      "type": {
+        "title": "1. הקלידו באופן טבעי",
+        "description": "כתבו איך המילים נשמעות לכם. אל תדאגו לאיות מושלם."
+      },
+      "suggestions": {
+        "title": "2. קבלו הצעות חכמות",
+        "description": "הבינה המלאכותית שלנו מזהה דפוסים פונטיים ומציעה תיקונים."
+      },
+      "learn": {
+        "title": "3. למדו יחד",
+        "description": "קבלו או דחו הצעות כדי ללמד את המערכת את ההעדפות שלכם."
+      }
+    }
+  },
+  "patterns": {
+    "title": "דפוסים נפוצים",
+    "examples": {
+      "phone": "טלפון",
+      "separate": "נפרד",
+      "receive": "לקבל",
+      "would_have": "היה"
+    }
+  },
+  "features": {
+    "title": "תכונות חדשות",
+    "whisper_gemma": "אינטגרציית ML של Whisper ו-Gemma",
+    "cloud_sync": "סנכרון ענן ותכונות פרמיום",
+    "mobile_extension": "אפליקציית מובייל והרחבת Chrome",
+    "explore": "חקור תכונות"
+  },
+  "notifications": {
+    "example_loaded": "נטען טקסט דוגמה עם שגיאות פונטיות נפוצות",
+    "text_cleared": "הטקסט נוקה",
+    "suggestion_applied": "הצעה הוחלה: {{original}} → {{suggestion}}",
+    "suggestion_rejected": "הצעה נדחתה עבור \"{{original}}\"",
+    "no_text_to_save": "אין טקסט לשמירה",
+    "document_saved": "המסמך נשמר בהצלחה",
+    "document_loaded": "המסמך נטען בהצלחה",
+    "save_failed": "שגיאה בשמירת המסמך",
+    "load_failed": "שגיאה בפתיחת המסמך",
+    "speech_transcribed": "הדיבור תומלל בהצלחה",
+    "use_read_aloud": "השתמשו בפקדי הקריאה בקול רם למטה"
+  },
+  "errors": {
+    "speech_not_supported": "זיהוי דיבור לא נתמך בדפדפן זה",
+    "microphone_access": "גישה למיקרופון נדחתה",
+    "speech_error": "שגיאת זיהוי דיבור",
+    "tts_not_supported": "טקסט לדיבור לא נתמך בדפדפן זה",
+    "model_load_failed": "שגיאה בטעינת מודל ML",
+    "network_error": "שגיאת רשת התרחשה"
+  }
+}

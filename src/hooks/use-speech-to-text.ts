@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { 
   WhisperEngine, 
@@ -8,8 +9,9 @@ import {
   TranscriptionResult,
   getPlatformCapabilities 
 } from '@/lib/speech-engines';
+import { whisperModels } from '@/utils/multiLanguageSupport';
 
-// Enhanced language support with Whisper.cpp model mapping
+// Enhanced language support with Whisper.cpp model mapping from utils
 export const WHISPER_LANGUAGES = [
   { code: 'en', label: 'English', flag: '🇺🇸', whisperModel: 'base.en' },
   { code: 'es', label: 'Spanish', flag: '🇪🇸', whisperModel: 'base' },
@@ -136,10 +138,17 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
   } = options;
 
   // Persistent settings
-  const [selectedLanguage, setSelectedLanguage] = useKV('stt-language', language);
+  const [selectedLanguage, setSelectedLanguage] = useKV('stt-language', currentLanguage);
   const [whisperEnabled, setWhisperEnabled] = useKV('stt-whisper-enabled', useWhisper);
   const [realtimeEnabled, setRealtimeEnabled] = useKV('stt-realtime-enabled', enableRealtime);
   const [modelSizePreference, setModelSizePreference] = useKV('stt-model-size', modelSize);
+
+  // Update selected language when context language changes
+  useEffect(() => {
+    if (currentLanguage !== selectedLanguage) {
+      setSelectedLanguage(currentLanguage);
+    }
+  }, [currentLanguage, selectedLanguage, setSelectedLanguage]);
 
   // State
   const [state, setState] = useState<SpeechToTextState>({

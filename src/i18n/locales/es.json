@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "PhonoCorrect AI",
+    "subtitle": "Un asistente de ortografía fonética que te ayuda a escribir con confianza. Obtén sugerencias inteligentes basadas en cómo suenan las palabras, no solo en cómo se escriben.",
+    "desktop": "Aplicación de Escritorio",
+    "shortcuts": "Atajos",
+    "shortcuts_help": "{{dictation}} (Dictado) • {{keyboard}} (Teclado) • {{save}} (Guardar)"
+  },
+  "tabs": {
+    "writing": "Escritura",
+    "hardware": "Hardware",
+    "ml_models": "Modelos ML",
+    "cloud_premium": "Nube y Premium",
+    "deployment": "Despliegue"
+  },
+  "writing": {
+    "title": "Área de Escritura",
+    "placeholder": "Comienza a escribir tu mensaje aquí. Prueba palabras como 'fone', 'seperate', o 'recieve' para ver correcciones fonéticas...",
+    "load_example": "Cargar Ejemplo",
+    "clear": "Limpiar",
+    "save": "Guardar",
+    "open": "Abrir",
+    "words_count": "{{count}} palabras",
+    "suggestions_count": "{{count}} sugerencia",
+    "suggestions_count_plural": "{{count}} sugerencias",
+    "analyzing": "Analizando...",
+    "suggestions_title": "Sugerencias Fonéticas"
+  },
+  "speech": {
+    "title": "Voz a Texto",
+    "start_listening": "Comenzar a Escuchar",
+    "stop_listening": "Dejar de Escuchar",
+    "listening": "Escuchando...",
+    "processing": "Procesando...",
+    "language": "Idioma",
+    "continuous": "Modo Continuo",
+    "append": "Agregar al Texto",
+    "replace": "Reemplazar Texto",
+    "clear_transcript": "Limpiar",
+    "apply_transcript": "Aplicar"
+  },
+  "tts": {
+    "title": "Texto a Voz",
+    "read_aloud": "Leer en Voz Alta",
+    "stop": "Detener",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "voice": "Voz",
+    "speed": "Velocidad",
+    "pitch": "Tono",
+    "volume": "Volumen",
+    "reading": "Leyendo...",
+    "paused": "Pausado"
+  },
+  "keyboard": {
+    "title": "Teclado Virtual",
+    "layout": "Distribución",
+    "layouts": {
+      "qwerty": "QWERTY",
+      "azerty": "AZERTY",
+      "qwertz": "QWERTZ",
+      "dvorak": "Dvorak"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "language": "Idioma",
+    "theme": "Tema",
+    "voice_settings": "Configuración de Voz",
+    "ml_settings": "Configuración ML",
+    "save": "Guardar Configuración",
+    "reset": "Restablecer por Defecto"
+  },
+  "suggestions": {
+    "confidence": "Confianza",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "confidence_levels": {
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    }
+  },
+  "premium": {
+    "title": "Cuenta Premium",
+    "upgrade": "Actualizar a Premium",
+    "features": {
+      "cloud_sync": "Sincronización en la Nube",
+      "advanced_ml": "Modelos ML Avanzados",
+      "unlimited": "Uso Ilimitado",
+      "priority_support": "Soporte Prioritario"
+    },
+    "price": "$5/mes",
+    "current_plan": "Plan Actual",
+    "free": "Gratuito",
+    "premium": "Premium"
+  },
+  "models": {
+    "title": "Modelos ML",
+    "whisper": "Modelos Whisper",
+    "gemma": "Modelos Gemma",
+    "coqui": "Coqui TTS",
+    "download": "Descargar",
+    "downloading": "Descargando...",
+    "ready": "Listo",
+    "not_available": "No Disponible",
+    "size": "Tamaño",
+    "accuracy": "Precisión",
+    "speed": "Velocidad"
+  },
+  "deployment": {
+    "title": "Despliegue",
+    "platforms": {
+      "mobile": "Aplicaciones Móviles",
+      "desktop": "Aplicaciones de Escritorio",
+      "web": "Aplicación Web",
+      "extension": "Extensión del Navegador"
+    },
+    "status": {
+      "ready": "Listo",
+      "building": "Construyendo",
+      "error": "Error",
+      "not_configured": "No Configurado"
+    }
+  },
+  "help": {
+    "title": "Cómo Funciona",
+    "steps": {
+      "type": {
+        "title": "1. Escribe Naturalmente",
+        "description": "Escribe como suenan las palabras para ti. No te preocupes por la ortografía perfecta."
+      },
+      "suggestions": {
+        "title": "2. Obtén Sugerencias Inteligentes",
+        "description": "Nuestra IA reconoce patrones fonéticos y sugiere correcciones."
+      },
+      "learn": {
+        "title": "3. Aprende Juntos",
+        "description": "Acepta o rechaza sugerencias para enseñar al sistema tus preferencias."
+      }
+    }
+  },
+  "patterns": {
+    "title": "Patrones Comunes",
+    "examples": {
+      "phone": "teléfono",
+      "separate": "separar",
+      "receive": "recibir",
+      "would_have": "habría"
+    }
+  },
+  "features": {
+    "title": "Nuevas Características",
+    "whisper_gemma": "Integración ML Whisper y Gemma",
+    "cloud_sync": "Sincronización en la nube y características premium",
+    "mobile_extension": "Aplicación móvil y extensión de Chrome",
+    "explore": "Explorar Características"
+  },
+  "notifications": {
+    "example_loaded": "Texto de ejemplo cargado con errores fonéticos comunes",
+    "text_cleared": "Texto limpiado",
+    "suggestion_applied": "Sugerencia aplicada: {{original}} → {{suggestion}}",
+    "suggestion_rejected": "Sugerencia rechazada para \"{{original}}\"",
+    "no_text_to_save": "No hay texto para guardar",
+    "document_saved": "Documento guardado exitosamente",
+    "document_loaded": "Documento cargado exitosamente",
+    "save_failed": "Error al guardar el documento",
+    "load_failed": "Error al abrir el documento",
+    "speech_transcribed": "Voz transcrita exitosamente",
+    "use_read_aloud": "Usa los controles de Lectura en Voz Alta abajo"
+  },
+  "errors": {
+    "speech_not_supported": "Reconocimiento de voz no soportado en este navegador",
+    "microphone_access": "Acceso al micrófono denegado",
+    "speech_error": "Error en el reconocimiento de voz",
+    "tts_not_supported": "Texto a voz no soportado en este navegador",
+    "model_load_failed": "Error al cargar el modelo ML",
+    "network_error": "Ocurrió un error de red"
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "PhonoCorrect AI",
+    "subtitle": "مساعد إملائي صوتي يساعدك على الكتابة بثقة. احصل على اقتراحات ذكية مبنية على كيفية نطق الكلمات، وليس فقط على كيفية كتابتها.",
+    "desktop": "تطبيق سطح المكتب",
+    "shortcuts": "اختصارات",
+    "shortcuts_help": "{{dictation}} (الإملاء) • {{keyboard}} (لوحة المفاتيح) • {{save}} (حفظ)"
+  },
+  "tabs": {
+    "writing": "الكتابة",
+    "hardware": "الأجهزة",
+    "ml_models": "نماذج ML",
+    "cloud_premium": "السحابة والمميز",
+    "deployment": "النشر"
+  },
+  "writing": {
+    "title": "منطقة الكتابة",
+    "placeholder": "ابدأ بكتابة رسالتك هنا. جرب كلمات مثل 'fone' أو 'seperate' أو 'recieve' لرؤية التصحيحات الصوتية...",
+    "load_example": "تحميل مثال",
+    "clear": "مسح",
+    "save": "حفظ",
+    "open": "فتح",
+    "words_count": "{{count}} كلمات",
+    "suggestions_count": "{{count}} اقتراح",
+    "suggestions_count_plural": "{{count}} اقتراحات",
+    "analyzing": "يتم التحليل...",
+    "suggestions_title": "الاقتراحات الصوتية"
+  },
+  "speech": {
+    "title": "الكلام إلى نص",
+    "start_listening": "بدء الاستماع",
+    "stop_listening": "إيقاف الاستماع",
+    "listening": "يستمع...",
+    "processing": "معالجة...",
+    "language": "اللغة",
+    "continuous": "الوضع المستمر",
+    "append": "إضافة إلى النص",
+    "replace": "استبدال النص",
+    "clear_transcript": "مسح",
+    "apply_transcript": "تطبيق"
+  },
+  "tts": {
+    "title": "النص إلى كلام",
+    "read_aloud": "قراءة بصوت عالٍ",
+    "stop": "إيقاف",
+    "pause": "إيقاف مؤقت",
+    "resume": "متابعة",
+    "voice": "الصوت",
+    "speed": "السرعة",
+    "pitch": "درجة الصوت",
+    "volume": "مستوى الصوت",
+    "reading": "يقرأ...",
+    "paused": "متوقف مؤقتاً"
+  },
+  "keyboard": {
+    "title": "لوحة المفاتيح الافتراضية",
+    "layout": "التخطيط",
+    "layouts": {
+      "qwerty": "QWERTY",
+      "azerty": "AZERTY",
+      "qwertz": "QWERTZ",
+      "dvorak": "Dvorak"
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "theme": "المظهر",
+    "voice_settings": "إعدادات الصوت",
+    "ml_settings": "إعدادات ML",
+    "save": "حفظ الإعدادات",
+    "reset": "إعادة تعيين افتراضي"
+  },
+  "suggestions": {
+    "confidence": "الثقة",
+    "accept": "قبول",
+    "reject": "رفض",
+    "confidence_levels": {
+      "high": "عالية",
+      "medium": "متوسطة",
+      "low": "منخفضة"
+    }
+  },
+  "premium": {
+    "title": "حساب مميز",
+    "upgrade": "ترقية إلى مميز",
+    "features": {
+      "cloud_sync": "مزامنة السحابة",
+      "advanced_ml": "نماذج ML متقدمة",
+      "unlimited": "استخدام غير محدود",
+      "priority_support": "دعم ذو أولوية"
+    },
+    "price": "$5/شهر",
+    "current_plan": "الخطة الحالية",
+    "free": "مجاني",
+    "premium": "مميز"
+  },
+  "models": {
+    "title": "نماذج ML",
+    "whisper": "نماذج Whisper",
+    "gemma": "نماذج Gemma",
+    "coqui": "Coqui TTS",
+    "download": "تحميل",
+    "downloading": "يتم التحميل...",
+    "ready": "جاهز",
+    "not_available": "غير متوفر",
+    "size": "الحجم",
+    "accuracy": "الدقة",
+    "speed": "السرعة"
+  },
+  "deployment": {
+    "title": "النشر",
+    "platforms": {
+      "mobile": "تطبيقات الجوال",
+      "desktop": "تطبيقات سطح المكتب",
+      "web": "تطبيق الويب",
+      "extension": "إضافة المتصفح"
+    },
+    "status": {
+      "ready": "جاهز",
+      "building": "يتم البناء",
+      "error": "خطأ",
+      "not_configured": "غير مُعد"
+    }
+  },
+  "help": {
+    "title": "كيف يعمل",
+    "steps": {
+      "type": {
+        "title": "1. اكتب بطبيعية",
+        "description": "اكتب كما تبدو الكلمات لك. لا تقلق بشأن الإملاء المثالي."
+      },
+      "suggestions": {
+        "title": "2. احصل على اقتراحات ذكية",
+        "description": "الذكاء الاصطناعي لدينا يتعرف على الأنماط الصوتية ويقترح التصحيحات."
+      },
+      "learn": {
+        "title": "3. تعلموا معاً",
+        "description": "اقبل أو ارفض الاقتراحات لتعليم النظام تفضيلاتك."
+      }
+    }
+  },
+  "patterns": {
+    "title": "الأنماط الشائعة",
+    "examples": {
+      "phone": "هاتف",
+      "separate": "منفصل",
+      "receive": "يستقبل",
+      "would_have": "كان سيكون"
+    }
+  },
+  "features": {
+    "title": "ميزات جديدة",
+    "whisper_gemma": "تكامل ML لـ Whisper و Gemma",
+    "cloud_sync": "مزامنة السحابة والميزات المميزة",
+    "mobile_extension": "تطبيق الجوال وإضافة Chrome",
+    "explore": "استكشاف الميزات"
+  },
+  "notifications": {
+    "example_loaded": "تم تحميل نص المثال مع أخطاء صوتية شائعة",
+    "text_cleared": "تم مسح النص",
+    "suggestion_applied": "تم تطبيق الاقتراح: {{original}} → {{suggestion}}",
+    "suggestion_rejected": "تم رفض الاقتراح لـ \"{{original}}\"",
+    "no_text_to_save": "لا يوجد نص للحفظ",
+    "document_saved": "تم حفظ المستند بنجاح",
+    "document_loaded": "تم تحميل المستند بنجاح",
+    "save_failed": "فشل في حفظ المستند",
+    "load_failed": "فشل في فتح المستند",
+    "speech_transcribed": "تم نسخ الكلام بنجاح",
+    "use_read_aloud": "استخدم عناصر التحكم في القراءة بصوت عالٍ أدناه"
+  },
+  "errors": {
+    "speech_not_supported": "التعرف على الكلام غير مدعوم في هذا المتصفح",
+    "microphone_access": "تم رفض الوصول إلى الميكروفون",
+    "speech_error": "خطأ في التعرف على الكلام",
+    "tts_not_supported": "تحويل النص إلى كلام غير مدعوم في هذا المتصفح",
+    "model_load_failed": "فشل في تحميل نموذج ML",
+    "network_error": "حدث خطأ في الشبكة"
+  }
+}

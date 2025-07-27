@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { PhoneticEngine, Suggestion, UserPreference } from '@/lib/phoneticEngine';
+import { phoneticPatterns, gemmaVocabularies } from '@/utils/multiLanguageSupport';
+import type { SupportedLanguage } from '@/i18n';
 
 // Hardware-accelerated ML Core integration
 let HardwareAcceleration: any = null;
@@ -53,6 +56,7 @@ const initializeMLBridge = async () => {
 };
 
 export function usePhonoEngine(text: string) {
+  const { currentLanguage } = useLanguage();
   const [userPreferences, setUserPreferences] = useKV<UserPreference[]>('phono-preferences', []);
   const [engine, setEngine] = useState<PhoneticEngine | null>(null);
   const [gemmaInstance, setGemmaInstance] = useState<any>(null);
@@ -118,10 +122,15 @@ export function usePhonoEngine(text: string) {
         let newSuggestions: Suggestion[] = [];
 
         if (isMLReady && hardwareAccel?.isInitialized()) {
-          // Use hardware-accelerated ML correction
+          // Use hardware-accelerated ML correction with language context
           try {
             const startTime = Date.now();
-            const correctedText = await hardwareAccel.correctPhonetic(text);
+            const languageContext = gemmaVocabularies[currentLanguage];
+            const correctedText = await hardwareAccel.correctPhonetic(text, {
+              language: currentLanguage,
+              contextPrompt: languageContext.contextPrompt,
+              vocabularyHints: languageContext.vocabularyHints
+            });
             const endTime = Date.now();
             
             // Get performance metrics
@@ -142,7 +151,12 @@ export function usePhonoEngine(text: string) {
             // Fallback to software ML if available
             if (gemmaInstance) {
               try {
-                const corrections = await gemmaInstance.phonoCorrectWithDetails(text);
+                const languageContext = gemmaVocabularies[currentLanguage];
+                const corrections = await gemmaInstance.phonoCorrectWithDetails(text, {
+                  language: currentLanguage,
+                  contextPrompt: languageContext.contextPrompt,
+                  vocabularyHints: languageContext.vocabularyHints
+                });
                 newSuggestions = corrections.map((correction: any) => ({
                   original: correction.original,
                   suggestion: correction.corrected,
@@ -154,16 +168,21 @@ export function usePhonoEngine(text: string) {
                 }));
               } catch (mlError) {
                 console.warn('[PhonoEngine] Software ML also failed, using rule-based engine:', mlError);
-                newSuggestions = engine.analyzText(text);
+                newSuggestions = engine.analyzText(text, phoneticPatterns[currentLanguage]);
               }
             } else {
-              newSuggestions = engine.analyzText(text);
+              newSuggestions = engine.analyzText(text, phoneticPatterns[currentLanguage]);
             }
           }
         } else if (isMLReady && gemmaInstance) {
           // Use software-only ML
           try {
-            const corrections = await gemmaInstance.phonoCorrectWithDetails(text);
+            const languageContext = gemmaVocabularies[currentLanguage];
+            const corrections = await gemmaInstance.phonoCorrectWithDetails(text, {
+              language: currentLanguage,
+              contextPrompt: languageContext.contextPrompt,
+              vocabularyHints: languageContext.vocabularyHints
+            });
             newSuggestions = corrections.map((correction: any) => ({
               original: correction.original,
               suggestion: correction.corrected,
@@ -175,11 +194,11 @@ export function usePhonoEngine(text: string) {
             }));
           } catch (mlError) {
             console.warn('[PhonoEngine] ML correction failed, using rule-based engine:', mlError);
-            newSuggestions = engine.analyzText(text);
+            newSuggestions = engine.analyzText(text, phoneticPatterns[currentLanguage]);
           }
         } else {
-          // Use traditional phonetic engine
-          newSuggestions = engine.analyzText(text);
+          // Use traditional phonetic engine with language-specific patterns
+          newSuggestions = engine.analyzText(text, phoneticPatterns[currentLanguage]);
         }
 
         setSuggestions(newSuggestions);
@@ -195,7 +214,7 @@ export function usePhonoEngine(text: string) {
       clearTimeout(timeoutId);
       setIsAnalyzing(false);
     };
-  }, [text, engine, isMLReady, gemmaInstance]);
+  }, [text, engine, isMLReady, gemmaInstance, currentLanguage]);
 
   // Cleanup function with hardware acceleration cleanup
   useEffect(() => {

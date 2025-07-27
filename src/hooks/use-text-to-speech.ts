@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { 
   CoquiEngine, 
@@ -7,6 +8,7 @@ import {
   SynthesisResult,
   getPlatformCapabilities 
 } from '@/lib/speech-engines';
+import { coquiVoices } from '@/utils/multiLanguageSupport';
 
 // Voice configurations for different TTS engines
 export interface Voice {
@@ -211,14 +213,24 @@ class CoquiTTSEngine {
 }
 
 export function useTextToSpeech(options: TTSOptions = {}) {
+  const { currentLanguage, t } = useLanguage();
+  
   // Persistent settings
-  const [selectedVoice, setSelectedVoice] = useKV('tts-voice', 'coqui-en-ljspeech');
+  const [selectedVoice, setSelectedVoice] = useKV('tts-voice', coquiVoices[currentLanguage]?.default || 'browser-auto');
   const [defaultRate, setDefaultRate] = useKV('tts-rate', 1.0);
   const [defaultPitch, setDefaultPitch] = useKV('tts-pitch', 1.0);
   const [defaultVolume, setDefaultVolume] = useKV('tts-volume', 1.0);
   const [ssmlEnabled, setSSMLEnabled] = useKV('tts-ssml-enabled', false);
   const [highlightEnabled, setHighlightEnabled] = useKV('tts-highlight-enabled', true);
   const [coquiEnabled, setCoquiEnabled] = useKV('tts-coqui-enabled', true);
+
+  // Update selected voice when language changes
+  useEffect(() => {
+    const languageVoices = coquiVoices[currentLanguage];
+    if (languageVoices && selectedVoice === 'browser-auto') {
+      setSelectedVoice(languageVoices.default);
+    }
+  }, [currentLanguage, selectedVoice, setSelectedVoice]);
 
   // State
   const [state, setState] = useState<TextToSpeechState>({

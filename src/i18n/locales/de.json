@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "PhonoCorrect AI",
+    "subtitle": "Ein phonetischer Rechtschreibassistent, der Ihnen hilft, mit Vertrauen zu schreiben. Erhalten Sie intelligente Vorschläge basierend darauf, wie Wörter klingen, nicht nur wie sie geschrieben werden.",
+    "desktop": "Desktop-Anwendung",
+    "shortcuts": "Tastenkürzel",
+    "shortcuts_help": "{{dictation}} (Diktat) • {{keyboard}} (Tastatur) • {{save}} (Speichern)"
+  },
+  "tabs": {
+    "writing": "Schreiben",
+    "hardware": "Hardware",
+    "ml_models": "ML-Modelle",
+    "cloud_premium": "Cloud & Premium",
+    "deployment": "Bereitstellung"
+  },
+  "writing": {
+    "title": "Schreibbereich",
+    "placeholder": "Beginnen Sie hier mit der Eingabe Ihrer Nachricht. Probieren Sie Wörter wie 'fone', 'seperate' oder 'recieve' aus, um phonetische Korrekturen zu sehen...",
+    "load_example": "Beispiel Laden",
+    "clear": "Löschen",
+    "save": "Speichern",
+    "open": "Öffnen",
+    "words_count": "{{count}} Wörter",
+    "suggestions_count": "{{count}} Vorschlag",
+    "suggestions_count_plural": "{{count}} Vorschläge",
+    "analyzing": "Analysiere...",
+    "suggestions_title": "Phonetische Vorschläge"
+  },
+  "speech": {
+    "title": "Sprache zu Text",
+    "start_listening": "Zuhören Beginnen",
+    "stop_listening": "Zuhören Beenden",
+    "listening": "Zuhören...",
+    "processing": "Verarbeitung...",
+    "language": "Sprache",
+    "continuous": "Kontinuierlicher Modus",
+    "append": "An Text Anhängen",
+    "replace": "Text Ersetzen",
+    "clear_transcript": "Löschen",
+    "apply_transcript": "Anwenden"
+  },
+  "tts": {
+    "title": "Text zu Sprache",
+    "read_aloud": "Vorlesen",
+    "stop": "Stoppen",
+    "pause": "Pause",
+    "resume": "Fortsetzen",
+    "voice": "Stimme",
+    "speed": "Geschwindigkeit",
+    "pitch": "Tonhöhe",
+    "volume": "Lautstärke",
+    "reading": "Liest vor...",
+    "paused": "Pausiert"
+  },
+  "keyboard": {
+    "title": "Virtuelle Tastatur",
+    "layout": "Layout",
+    "layouts": {
+      "qwerty": "QWERTY",
+      "azerty": "AZERTY",
+      "qwertz": "QWERTZ",
+      "dvorak": "Dvorak"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "theme": "Theme",
+    "voice_settings": "Spracheinstellungen",
+    "ml_settings": "ML-Einstellungen",
+    "save": "Einstellungen Speichern",
+    "reset": "Auf Standard Zurücksetzen"
+  },
+  "suggestions": {
+    "confidence": "Vertrauen",
+    "accept": "Akzeptieren",
+    "reject": "Ablehnen",
+    "confidence_levels": {
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig"
+    }
+  },
+  "premium": {
+    "title": "Premium-Konto",
+    "upgrade": "Auf Premium Upgraden",
+    "features": {
+      "cloud_sync": "Cloud-Synchronisation",
+      "advanced_ml": "Erweiterte ML-Modelle",
+      "unlimited": "Unbegrenzte Nutzung",
+      "priority_support": "Prioritätssupport"
+    },
+    "price": "5$/Monat",
+    "current_plan": "Aktueller Plan",
+    "free": "Kostenlos",
+    "premium": "Premium"
+  },
+  "models": {
+    "title": "ML-Modelle",
+    "whisper": "Whisper-Modelle",
+    "gemma": "Gemma-Modelle",
+    "coqui": "Coqui TTS",
+    "download": "Herunterladen",
+    "downloading": "Lädt herunter...",
+    "ready": "Bereit",
+    "not_available": "Nicht Verfügbar",
+    "size": "Größe",
+    "accuracy": "Genauigkeit",
+    "speed": "Geschwindigkeit"
+  },
+  "deployment": {
+    "title": "Bereitstellung",
+    "platforms": {
+      "mobile": "Mobile Apps",
+      "desktop": "Desktop-Apps",
+      "web": "Web-App",
+      "extension": "Browser-Erweiterung"
+    },
+    "status": {
+      "ready": "Bereit",
+      "building": "Erstellt",
+      "error": "Fehler",
+      "not_configured": "Nicht Konfiguriert"
+    }
+  },
+  "help": {
+    "title": "Wie Es Funktioniert",
+    "steps": {
+      "type": {
+        "title": "1. Natürlich Tippen",
+        "description": "Schreiben Sie, wie Wörter für Sie klingen. Machen Sie sich keine Sorgen über perfekte Rechtschreibung."
+      },
+      "suggestions": {
+        "title": "2. Intelligente Vorschläge Erhalten",
+        "description": "Unsere KI erkennt phonetische Muster und schlägt Korrekturen vor."
+      },
+      "learn": {
+        "title": "3. Gemeinsam Lernen",
+        "description": "Akzeptieren oder lehnen Sie Vorschläge ab, um dem System Ihre Präferenzen beizubringen."
+      }
+    }
+  },
+  "patterns": {
+    "title": "Häufige Muster",
+    "examples": {
+      "phone": "Telefon",
+      "separate": "trennen",
+      "receive": "erhalten",
+      "would_have": "hätte"
+    }
+  },
+  "features": {
+    "title": "Neue Funktionen",
+    "whisper_gemma": "Whisper & Gemma ML-Integration",
+    "cloud_sync": "Cloud-Synchronisation & Premium-Features",
+    "mobile_extension": "Mobile App & Chrome-Erweiterung",
+    "explore": "Funktionen Erkunden"
+  },
+  "notifications": {
+    "example_loaded": "Beispieltext mit häufigen phonetischen Fehlern geladen",
+    "text_cleared": "Text gelöscht",
+    "suggestion_applied": "Vorschlag angewendet: {{original}} → {{suggestion}}",
+    "suggestion_rejected": "Vorschlag für \"{{original}}\" abgelehnt",
+    "no_text_to_save": "Kein Text zum Speichern",
+    "document_saved": "Dokument erfolgreich gespeichert",
+    "document_loaded": "Dokument erfolgreich geladen",
+    "save_failed": "Fehler beim Speichern des Dokuments",
+    "load_failed": "Fehler beim Öffnen des Dokuments",
+    "speech_transcribed": "Sprache erfolgreich transkribiert",
+    "use_read_aloud": "Verwenden Sie die Vorlese-Steuerelemente unten"
+  },
+  "errors": {
+    "speech_not_supported": "Spracherkennung in diesem Browser nicht unterstützt",
+    "microphone_access": "Mikrofonzugriff verweigert",
+    "speech_error": "Spracherkennungsfehler",
+    "tts_not_supported": "Text-zu-Sprache in diesem Browser nicht unterstützt",
+    "model_load_failed": "Fehler beim Laden des ML-Modells",
+    "network_error": "Netzwerkfehler aufgetreten"
+  }
+}

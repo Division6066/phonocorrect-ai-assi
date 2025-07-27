@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "PhonoCorrect AI",
+    "subtitle": "一个语音拼写助手，帮助您自信地书写。基于单词的发音而非仅仅拼写来获得智能建议。",
+    "desktop": "桌面应用",
+    "shortcuts": "快捷键",
+    "shortcuts_help": "{{dictation}} (听写) • {{keyboard}} (键盘) • {{save}} (保存)"
+  },
+  "tabs": {
+    "writing": "写作",
+    "hardware": "硬件",
+    "ml_models": "ML模型",
+    "cloud_premium": "云端和高级版",
+    "deployment": "部署"
+  },
+  "writing": {
+    "title": "写作区域",
+    "placeholder": "在这里开始输入您的消息。尝试像'fone'、'seperate'或'recieve'这样的单词来查看语音纠正...",
+    "load_example": "加载示例",
+    "clear": "清除",
+    "save": "保存",
+    "open": "打开",
+    "words_count": "{{count}} 个单词",
+    "suggestions_count": "{{count}} 个建议",
+    "suggestions_count_plural": "{{count}} 个建议",
+    "analyzing": "分析中...",
+    "suggestions_title": "语音建议"
+  },
+  "speech": {
+    "title": "语音转文字",
+    "start_listening": "开始听取",
+    "stop_listening": "停止听取",
+    "listening": "听取中...",
+    "processing": "处理中...",
+    "language": "语言",
+    "continuous": "连续模式",
+    "append": "追加到文本",
+    "replace": "替换文本",
+    "clear_transcript": "清除",
+    "apply_transcript": "应用"
+  },
+  "tts": {
+    "title": "文字转语音",
+    "read_aloud": "朗读",
+    "stop": "停止",
+    "pause": "暂停",
+    "resume": "继续",
+    "voice": "语音",
+    "speed": "速度",
+    "pitch": "音调",
+    "volume": "音量",
+    "reading": "朗读中...",
+    "paused": "已暂停"
+  },
+  "keyboard": {
+    "title": "虚拟键盘",
+    "layout": "布局",
+    "layouts": {
+      "qwerty": "QWERTY",
+      "azerty": "AZERTY",
+      "qwertz": "QWERTZ",
+      "dvorak": "Dvorak"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "theme": "主题",
+    "voice_settings": "语音设置",
+    "ml_settings": "ML设置",
+    "save": "保存设置",
+    "reset": "重置为默认"
+  },
+  "suggestions": {
+    "confidence": "置信度",
+    "accept": "接受",
+    "reject": "拒绝",
+    "confidence_levels": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    }
+  },
+  "premium": {
+    "title": "高级账户",
+    "upgrade": "升级到高级版",
+    "features": {
+      "cloud_sync": "云端同步",
+      "advanced_ml": "高级ML模型",
+      "unlimited": "无限使用",
+      "priority_support": "优先支持"
+    },
+    "price": "$5/月",
+    "current_plan": "当前计划",
+    "free": "免费",
+    "premium": "高级版"
+  },
+  "models": {
+    "title": "ML模型",
+    "whisper": "Whisper模型",
+    "gemma": "Gemma模型",
+    "coqui": "Coqui TTS",
+    "download": "下载",
+    "downloading": "下载中...",
+    "ready": "就绪",
+    "not_available": "不可用",
+    "size": "大小",
+    "accuracy": "准确度",
+    "speed": "速度"
+  },
+  "deployment": {
+    "title": "部署",
+    "platforms": {
+      "mobile": "移动应用",
+      "desktop": "桌面应用",
+      "web": "网页应用",
+      "extension": "浏览器扩展"
+    },
+    "status": {
+      "ready": "就绪",
+      "building": "构建中",
+      "error": "错误",
+      "not_configured": "未配置"
+    }
+  },
+  "help": {
+    "title": "工作原理",
+    "steps": {
+      "type": {
+        "title": "1. 自然输入",
+        "description": "按照单词对您的发音来书写。不要担心完美的拼写。"
+      },
+      "suggestions": {
+        "title": "2. 获得智能建议",
+        "description": "我们的AI识别语音模式并建议纠正。"
+      },
+      "learn": {
+        "title": "3. 共同学习",
+        "description": "接受或拒绝建议来教会系统您的偏好。"
+      }
+    }
+  },
+  "patterns": {
+    "title": "常见模式",
+    "examples": {
+      "phone": "电话",
+      "separate": "分离",
+      "receive": "接收",
+      "would_have": "本来会"
+    }
+  },
+  "features": {
+    "title": "新功能",
+    "whisper_gemma": "Whisper和Gemma ML集成",
+    "cloud_sync": "云端同步和高级功能",
+    "mobile_extension": "移动应用和Chrome扩展",
+    "explore": "探索功能"
+  },
+  "notifications": {
+    "example_loaded": "已加载包含常见语音错误的示例文本",
+    "text_cleared": "文本已清除",
+    "suggestion_applied": "已应用建议：{{original}} → {{suggestion}}",
+    "suggestion_rejected": "已拒绝\"{{original}}\"的建议",
+    "no_text_to_save": "没有文本可保存",
+    "document_saved": "文档保存成功",
+    "document_loaded": "文档加载成功",
+    "save_failed": "文档保存失败",
+    "load_failed": "文档打开失败",
+    "speech_transcribed": "语音转录成功",
+    "use_read_aloud": "使用下方的朗读控件"
+  },
+  "errors": {
+    "speech_not_supported": "此浏览器不支持语音识别",
+    "microphone_access": "麦克风访问被拒绝",
+    "speech_error": "语音识别错误",
+    "tts_not_supported": "此浏览器不支持文字转语音",
+    "model_load_failed": "ML模型加载失败",
+    "network_error": "网络错误"
+  }
+}

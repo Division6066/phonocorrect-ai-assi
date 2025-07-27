@@ -34,7 +34,11 @@
         "release:ios": "cd mobile && eas build --platform ios --profile preview",
         "package:chrome": "cd chrome-ext && pnpm build && cd dist && zip -r ../phonocorrect-chrome-extension.zip ."
     },
-    "dependencies": {},
+    "dependencies": {
+        "i18next": "^25.3.2",
+        "i18next-browser-languagedetector": "^8.2.0",
+        "react-i18next": "^15.6.1"
+    },
     "devDependencies": {
         "@eslint/js": "^9.21.0",
         "@types/node": "^22.0.0",
