@@ -20,7 +20,8 @@ import { CloudSyncPanel } from "@/components/CloudSyncPanel";
 import { DeploymentPanel } from "@/components/DeploymentPanel";
 import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
 import { CustomRulesPanel } from "@/components/CustomRulesPanel";
-import { Brain, Lightbulb, ArrowCounterClockwise, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Lightning, Globe } from "@phosphor-icons/react";
+import { RuleTemplatesPanel } from "@/components/RuleTemplatesPanel";
+import { Brain, Lightbulb, ArrowCounterClockwise, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Lightning, Globe, Template } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 // Multi-language example texts
@@ -248,14 +249,18 @@ function App() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="writing" className="flex items-center gap-2">
                   <Lightbulb size={14} />
                   {t('tabs.writing')}
                 </TabsTrigger>
                 <TabsTrigger value="custom-rules" className="flex items-center gap-2">
                   <Lightbulb size={14} />
-                  Custom Rules
+                  Rules
+                </TabsTrigger>
+                <TabsTrigger value="rule-templates" className="flex items-center gap-2">
+                  <Template size={14} />
+                  Templates
                 </TabsTrigger>
                 <TabsTrigger value="language" className="flex items-center gap-2">
                   <Globe size={14} />
@@ -429,6 +434,10 @@ function App() {
                 <CustomRulesPanel />
               </TabsContent>
 
+              <TabsContent value="rule-templates" className="mt-6">
+                <RuleTemplatesPanel />
+              </TabsContent>
+
               <TabsContent value="language" className="mt-6">
                 <LanguageSettingsPanel />
               </TabsContent>
@@ -451,8 +460,8 @@ function App() {
             </Tabs>
           </div>
 
-          {/* Sidebar - only visible on writing, custom-rules, language and acceleration tabs */}
-          {(activeTab === "writing" || activeTab === "custom-rules" || activeTab === "language" || activeTab === "acceleration") && (
+          {/* Sidebar - only visible on writing, custom-rules, rule-templates, language and acceleration tabs */}
+          {(activeTab === "writing" || activeTab === "custom-rules" || activeTab === "rule-templates" || activeTab === "language" || activeTab === "acceleration") && (
             <div className="space-y-6">
               <PremiumAccountCard />
               <LearningStats preferences={userPreferences} />
@@ -529,6 +538,13 @@ function App() {
                   >
                     Manage Custom Rules
                   </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => setActiveTab("rule-templates")}
+                    className="w-full mt-2"
+                  >
+                    Browse Templates
                   </Button>
                 </CardContent>
               </Card>
