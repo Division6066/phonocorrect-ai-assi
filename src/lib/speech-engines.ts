@@ -763,13 +763,3 @@ export function getPlatformCapabilities() {
     }
   };
 }
-
-export {
-  type WhisperConfig,
-  type CoquiConfig,
-  type GemmaConfig,
-  type AudioBuffer,
-  type TranscriptionResult,
-  type SynthesisResult,
-  type CorrectionResult
-};

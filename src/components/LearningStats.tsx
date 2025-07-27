@@ -41,7 +41,7 @@ export const LearningStats: React.FC<LearningStatsProps> = ({ preferences }) => 
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <XCircle size={14} className="text-red-600" />
+            <X size={14} className="text-red-600" />
             <div>
               <div className="font-medium">{preferences.rejectedSuggestions}</div>
               <div className="text-muted-foreground text-xs">Rejected</div>

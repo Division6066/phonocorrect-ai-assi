@@ -193,7 +193,7 @@ class PlatformDetector {
       }
       
       // Check for SIMD support (improves performance)
-      if (WebAssembly.validate) {
+      if (typeof WebAssembly.validate === 'function') {
         // Basic WASM support
         return true;
       }
@@ -207,7 +207,7 @@ class PlatformDetector {
   private detectAndroidGPU(): boolean {
     // Detect GPU capabilities on Android
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext;
     
     if (!gl) return false;
     
@@ -224,7 +224,7 @@ class PlatformDetector {
   private detectDesktopGPU(): boolean {
     // Detect GPU capabilities on desktop
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext;
     
     if (!gl) return false;
     
@@ -294,19 +294,19 @@ export class SpeechEngineFactory {
 
 // Mock implementations (to be replaced with actual engines)
 class WebAssemblyWhisperEngine implements SpeechEngine {
-  async initialize(config: any): Promise<boolean> {
+  async initialize(_config: any): Promise<boolean> {
     console.log('Initializing WebAssembly Whisper engine');
     // TODO: Load whisper.cpp WASM module
     return true;
   }
 
-  async transcribe(audioData: Float32Array, language: string): Promise<{ text: string; confidence: number }> {
-    console.log('Transcribing with WebAssembly Whisper:', { audioLength: audioData.length, language });
+  async transcribe(_audioData: Float32Array, _language: string): Promise<{ text: string; confidence: number }> {
+    console.log('Transcribing with WebAssembly Whisper:', { audioLength: _audioData.length, language: _language });
     // TODO: Actual transcription
     return { text: 'Mock transcription', confidence: 0.95 };
   }
 
-  async synthesize(text: string, voice: string, options: any): Promise<ArrayBuffer> {
+  async synthesize(_text: string, _voice: string, _options: any): Promise<ArrayBuffer> {
     throw new Error('Whisper is for speech-to-text, not synthesis');
   }
 
@@ -316,18 +316,18 @@ class WebAssemblyWhisperEngine implements SpeechEngine {
 }
 
 class WebAssemblyCoquiEngine implements SpeechEngine {
-  async initialize(config: any): Promise<boolean> {
+  async initialize(_config: any): Promise<boolean> {
     console.log('Initializing WebAssembly Coqui engine');
     // TODO: Load Coqui TTS WASM module
     return true;
   }
 
-  async transcribe(audioData: Float32Array, language: string): Promise<{ text: string; confidence: number }> {
+  async transcribe(_audioData: Float32Array, _language: string): Promise<{ text: string; confidence: number }> {
     throw new Error('Coqui is for text-to-speech, not transcription');
   }
 
-  async synthesize(text: string, voice: string, options: any): Promise<ArrayBuffer> {
-    console.log('Synthesizing with WebAssembly Coqui:', { text, voice, options });
+  async synthesize(_text: string, _voice: string, _options: any): Promise<ArrayBuffer> {
+    console.log('Synthesizing with WebAssembly Coqui:', { text: _text, voice: _voice, options: _options });
     // TODO: Actual synthesis
     return new ArrayBuffer(0);
   }
@@ -347,13 +347,13 @@ class NativeWhisperEngine implements SpeechEngine {
     return false;
   }
 
-  async transcribe(audioData: Float32Array, language: string): Promise<{ text: string; confidence: number }> {
-    console.log('Transcribing with Native Whisper:', { audioLength: audioData.length, language });
+  async transcribe(_audioData: Float32Array, _language: string): Promise<{ text: string; confidence: number }> {
+    console.log('Transcribing with Native Whisper:', { audioLength: _audioData.length, language: _language });
     // TODO: Call native transcription
     return { text: 'Native transcription', confidence: 0.98 };
   }
 
-  async synthesize(text: string, voice: string, options: any): Promise<ArrayBuffer> {
+  async synthesize(_text: string, _voice: string, _options: any): Promise<ArrayBuffer> {
     throw new Error('Whisper is for speech-to-text, not synthesis');
   }
 

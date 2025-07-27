@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Lightning, Cpu, Check, Warning, Info } from "@phosphor-icons/react";
+import { Lightning, Check, Warning, Info } from "@phosphor-icons/react";
 
 export const HardwareAccelerationPanel: React.FC = () => {
   const accelerationMethods = [

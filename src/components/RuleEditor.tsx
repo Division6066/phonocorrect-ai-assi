@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomRules } from "@/hooks/use-custom-rules";
 import { CustomRule, RuleValidationResult } from "@/types/custom-rules";
-import { Plus, Save, X, AlertTriangle, Info, Eye } from "@phosphor-icons/react";
+import { FloppyDisk, X, Warning, Info, Eye } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 interface RuleEditorProps {
@@ -102,7 +102,7 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
             disabled={!validation.isValid || isSubmitting}
             className="flex items-center gap-2"
           >
-            <Save size={14} />
+            <FloppyDisk size={14} />
             {rule ? 'Update' : 'Create'}
           </Button>
           <Button variant="outline" onClick={onCancel}>
@@ -165,7 +165,7 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
               <Checkbox
                 id="isRegex"
                 checked={formData.isRegex}
-                onCheckedChange={(checked) => updateField('isRegex', checked)}
+                onCheckedChange={(checked: boolean) => updateField('isRegex', checked)}
               />
               <Label htmlFor="isRegex" className="text-sm">
                 Use regex pattern
@@ -176,7 +176,7 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
               <Checkbox
                 id="caseSensitive"
                 checked={formData.caseSensitive}
-                onCheckedChange={(checked) => updateField('caseSensitive', checked)}
+                onCheckedChange={(checked: boolean) => updateField('caseSensitive', checked)}
               />
               <Label htmlFor="caseSensitive" className="text-sm">
                 Case sensitive
@@ -187,7 +187,7 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
               <Checkbox
                 id="enabled"
                 checked={formData.enabled}
-                onCheckedChange={(checked) => updateField('enabled', checked)}
+                onCheckedChange={(checked: boolean) => updateField('enabled', checked)}
               />
               <Label htmlFor="enabled" className="text-sm">
                 Enable rule
@@ -198,7 +198,7 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
           {/* Validation Messages */}
           {!validation.isValid && validation.error && (
             <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
+              <Warning className="h-4 w-4" />
               <AlertDescription>{validation.error}</AlertDescription>
             </Alert>
           )}

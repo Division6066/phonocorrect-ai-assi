@@ -118,7 +118,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ children, defaultTab = '
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
+    <Dialog open={open} onOpenChange={(newOpen: boolean) => {
       setOpen(newOpen);
       if (!newOpen) resetForms();
     }}>

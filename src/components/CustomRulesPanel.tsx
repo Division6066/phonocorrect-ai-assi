@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCustomRules } from "@/hooks/use-custom-rules";
 import { RuleEditor } from "@/components/RuleEditor";
 import { CustomRule } from "@/types/custom-rules";
@@ -24,7 +24,6 @@ import {
   CheckCircle,
   Clock,
   TrendUp,
-  Share,
   Copy
 } from "@phosphor-icons/react";
 import { downloadRulesAsJson, copyRulesToClipboard, EXAMPLE_RULES } from "@/utils/rules-export";
@@ -33,13 +32,10 @@ import { toast } from "sonner";
 export function CustomRulesPanel() {
   const {
     customRules,
-    enabledRules,
     stats,
     createRule,
-    updateRule,
     deleteRule,
     toggleRule,
-    exportRules,
     importRules,
     clearAllRules,
     validateRule
@@ -53,7 +49,7 @@ export function CustomRulesPanel() {
   const [showImportDialog, setShowImportDialog] = useState(false);
 
   // Filter rules based on search and tab
-  const filteredRules = customRules.filter(rule => {
+  const filteredRules = customRules.filter((rule: any) => {
     const matchesSearch = !searchQuery || 
       rule.misspelling.toLowerCase().includes(searchQuery.toLowerCase()) ||
       rule.correction.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,7 +73,7 @@ export function CustomRulesPanel() {
     setShowEditor(true);
   };
 
-  const handleSaveRule = (savedRule: CustomRule) => {
+  const handleSaveRule = (_savedRule: CustomRule) => {
     setShowEditor(false);
     setEditingRule(undefined);
   };
@@ -136,7 +132,7 @@ export function CustomRulesPanel() {
       const text = await importFile.text();
       const importData = JSON.parse(text);
       
-      const result = await importRules(importData, { 
+      const _result = await importRules(importData, { 
         overwrite,
         skipDuplicates: !overwrite 
       });
@@ -292,7 +288,7 @@ export function CustomRulesPanel() {
             <TabsTrigger value="all">All ({customRules.length})</TabsTrigger>
             <TabsTrigger value="enabled">Enabled ({stats.enabled})</TabsTrigger>
             <TabsTrigger value="disabled">Disabled ({stats.disabled})</TabsTrigger>
-            <TabsTrigger value="regex">Regex ({customRules.filter(r => r.isRegex).length})</TabsTrigger>
+            <TabsTrigger value="regex">Regex ({customRules.filter((r: any) => r.isRegex).length})</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -328,7 +324,7 @@ export function CustomRulesPanel() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {filteredRules.map((rule) => {
+          {filteredRules.map((rule: any) => {
             const validation = validateRule(rule);
             const hasWarnings = validation.warnings && validation.warnings.length > 0;
             

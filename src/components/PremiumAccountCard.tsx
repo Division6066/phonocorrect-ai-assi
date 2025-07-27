@@ -26,8 +26,8 @@ export const PremiumAccountCard: React.FC = () => {
         cancelUrl: window.location.origin + '?canceled=true'
       });
 
-      if (result.data?.url) {
-        window.open(result.data.url, '_blank');
+      if ((result.data as any)?.url) {
+        window.open((result.data as any).url, '_blank');
       } else {
         throw new Error('Failed to create checkout session');
       }
@@ -48,8 +48,8 @@ export const PremiumAccountCard: React.FC = () => {
         returnUrl: window.location.origin
       });
 
-      if (result.data?.url) {
-        window.open(result.data.url, '_blank');
+      if ((result.data as any)?.url) {
+        window.open((result.data as any).url, '_blank');
       } else {
         throw new Error('Failed to create portal link');
       }

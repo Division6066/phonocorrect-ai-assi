@@ -11,7 +11,7 @@ interface EnhancedSpeechPipelineProps {
 
 export const EnhancedSpeechPipeline: React.FC<EnhancedSpeechPipelineProps> = ({
   onTranscript,
-  onAppendTranscript,
+  onAppendTranscript: _onAppendTranscript,
   textToSpeak
 }) => {
   return (

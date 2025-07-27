@@ -1,4 +1,4 @@
-import { useKV } from '@/lib/spark-hooks';
+import { useKV } from '@github/spark/hooks';
 import { useState, useCallback, useMemo } from 'react';
 import { CustomRule, RuleValidationResult, RulePreview, CustomRulesExport, RuleConflictResolution } from '@/types/custom-rules';
 import { generateId } from '@/utils/id-utils';
