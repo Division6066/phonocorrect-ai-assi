@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import { LanguageProvider } from './contexts/LanguageContext.tsx'
-import { AuthProvider } from './contexts/AuthContext.tsx'
+import { AuthProvider } from './contexts/AuthContext-mock.tsx'
 import { Toaster } from 'sonner'
 import './index.css'
 

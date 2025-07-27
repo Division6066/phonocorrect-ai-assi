@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Crown, CreditCard, Cloud, Lightning, Brain } from "@phosphor-icons/react";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext-mock';
 import { AuthDialog } from './AuthDialog';
 import { createCheckoutSession, createPortalLink, PREMIUM_PRICE_ID } from '@/lib/stripe';
 import { toast } from 'sonner';

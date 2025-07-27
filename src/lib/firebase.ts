@@ -4,12 +4,12 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "demo-api-key",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "phonocorrect-ai.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "phonocorrect-ai",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "phonocorrect-ai.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:123456789:web:abcdef123456"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "phonocorrect-ai.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "phonocorrect-ai",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "phonocorrect-ai.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef123456"
 };
 
 // Initialize Firebase
@@ -21,7 +21,7 @@ export const db = getFirestore(app);
 export const functions = getFunctions(app);
 
 // Connect to emulators in development
-if (process.env.NODE_ENV === 'development' && !process.env.REACT_APP_FIREBASE_USE_PRODUCTION) {
+if (import.meta.env.DEV && !import.meta.env.VITE_FIREBASE_USE_PRODUCTION) {
   try {
     // Auth emulator
     if (!auth.currentUser) {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Cloud, CreditCard, ArrowsClockwise, Check, X, Warning, User, Upload, Download } from "@phosphor-icons/react";
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext-mock';
 import { AuthDialog } from './AuthDialog';
 import { createCheckoutSession, createPortalLink, PREMIUM_PRICE_ID } from '@/lib/stripe';
 import { toast } from 'sonner';

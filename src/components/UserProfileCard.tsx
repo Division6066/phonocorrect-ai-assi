@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext-mock';
 import { AuthDialog } from './AuthDialog';
 import { User, SignOut, Crown, Settings, CreditCard } from '@phosphor-icons/react';
 import { toast } from 'sonner';

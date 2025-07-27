@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePhonoEngine } from "@/hooks/use-phono-engine";
 import { useElectron } from "@/hooks/use-electron";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext-mock";
 import { SuggestionCard } from "@/components/SuggestionCard";
 import { TextToSpeech } from "@/components/TextToSpeech";
 import { SpeechToText } from "@/components/SpeechToText";
