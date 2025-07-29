@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Lightbulb, ArrowCounterClockwise, Download, Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Lightning, Globe, FileText } from "@phosphor-icons/react";
+ { Brain, Lightbulb, ArrowCounterClockwise,,  Upload, Keyboard, Microphone, Cpu, Cloud, Rocket, Lightning, Globe, FileText } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
 // Simple mock interfaces
