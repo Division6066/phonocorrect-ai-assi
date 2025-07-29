@@ -14,7 +14,8 @@ import {
   Lightning as Zap,
   Eye,
   Bell,
-  Pulse as Activity
+  Pulse as Activity,
+  Cpu
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 

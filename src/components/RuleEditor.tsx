@@ -88,7 +88,10 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
   };
 
   // Generate preview
-  const previews = testText ? previewRule(formData, testText) : [];
+  const previews = testText ? previewRule({
+    ...formData,
+    examples: formData.examples.split('\n').filter(ex => ex.trim())
+  }, testText) : [];
 
   return (
     <div className="space-y-6">

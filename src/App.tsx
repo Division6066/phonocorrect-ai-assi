@@ -96,11 +96,6 @@ function App() {
     }
   ];
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast.success(`${label} copied to clipboard`);
-    });
-  };
 
   const markStepComplete = (stepIndex: number) => {
     if (!completedSteps.includes(stepIndex)) {

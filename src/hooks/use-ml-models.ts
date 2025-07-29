@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useState, useEffect, useCallback } from 'react';
 
 export interface WhisperConfig {
   language: string;
