@@ -135,7 +135,7 @@ export class WhisperEngine {
           await new Promise(resolve => setTimeout(resolve, 2000));
           return true;
         },
-        transcribe: async (audioData: Float32Array, language: string) => {
+        transcribe: async (_audioData: Float32Array, _language: string) => {
           console.log('Transcribing with WASM Whisper...');
           await new Promise(resolve => setTimeout(resolve, 500));
           return {
@@ -174,7 +174,7 @@ export class WhisperEngine {
           await new Promise(resolve => setTimeout(resolve, 1500));
           return true;
         },
-        transcribe: async (audioData: Float32Array, language: string) => {
+        transcribe: async (_audioData: Float32Array, _language: string) => {
           console.log('Transcribing with native Whisper...');
           await new Promise(resolve => setTimeout(resolve, 300));
           return {
@@ -270,7 +270,7 @@ export class CoquiEngine {
           await new Promise(resolve => setTimeout(resolve, 2500));
           return true;
         },
-        synthesize: async (text: string, speaker?: string, emotion?: string) => {
+        synthesize: async (text: string, _speaker?: string, _emotion?: string) => {
           console.log('Synthesizing with WASM Coqui TTS...');
           await new Promise(resolve => setTimeout(resolve, 800));
           
@@ -322,7 +322,7 @@ export class CoquiEngine {
           await new Promise(resolve => setTimeout(resolve, 1800));
           return true;
         },
-        synthesize: async (text: string, speaker?: string, emotion?: string) => {
+        synthesize: async (text: string, _speaker?: string, _emotion?: string) => {
           console.log('Synthesizing with native Coqui TTS...');
           await new Promise(resolve => setTimeout(resolve, 600));
           

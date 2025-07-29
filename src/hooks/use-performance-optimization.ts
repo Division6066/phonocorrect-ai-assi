@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { useKV } from './use-kv';
 
 export interface DeviceSpecs {
   platform: 'ios' | 'android' | 'desktop' | 'web';

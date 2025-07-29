@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useKV } from './use-kv';
 
 export interface DeploymentTarget {
   id: string;

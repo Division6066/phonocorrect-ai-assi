@@ -283,7 +283,7 @@ function loadReactNativeModules() {
       async startStreamingTranscription(language) {
         console.log('RN Whisper: Starting streaming transcription', language);
       },
-      async feedAudioData(audioChunk) {
+      async feedAudioData(_audioChunk) {
         // Process audio chunk
       },
       async stopStreamingTranscription() {
@@ -337,7 +337,7 @@ function loadReactNativeModules() {
       async startStreamingSynthesis(voiceId) {
         console.log('RN Coqui: Starting streaming synthesis', voiceId);
       },
-      async synthesizeChunk(text) {
+      async synthesizeChunk(_text) {
         return new Float32Array(1024); // Mock audio chunk
       },
       async stopStreamingSynthesis() {
@@ -699,7 +699,7 @@ export function createModelManager(): ModelManager {
       return Math.random() > 0.5; // Mock random result
     },
     
-    async getModelInfo(modelType, modelName) {
+    async getModelInfo(_modelType, _modelName) {
       return {
         size: 150 * 1024 * 1024, // 150MB
         version: '1.0.0',

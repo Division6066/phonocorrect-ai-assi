@@ -4,8 +4,6 @@ import { generateId } from '@/utils/id-utils';
 import { toast } from 'sonner';
 
 // Storage keys
-const CUSTOM_RULES_KEY = 'phonocorrect-custom-rules';
-const RULES_SETTINGS_KEY = 'phonocorrect-rules-settings';
 
 interface RulesSettings {
   conflictResolution: RuleConflictResolution;

@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
-  WhisperEngine as ImportedWhisperEngine, 
   WhisperConfig, 
   AudioBuffer, 
   getPlatformCapabilities 
@@ -125,7 +124,7 @@ class WhisperEngine {
 
 export function useSpeechToText(options: SpeechToTextOptions = {}) {
   const {
-    language = 'en',
+    language: _language = 'en',
     useWhisper = true,
     fallbackToBrowser = true,
     enableRealtime = true,

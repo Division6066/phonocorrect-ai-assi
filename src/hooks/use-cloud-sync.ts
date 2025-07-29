@@ -156,7 +156,7 @@ class CloudSyncService {
     throw new Error('Invalid credentials. Try test@example.com/password123 or premium@example.com/premium123');
   }
 
-  async signUp(email: string, password: string): Promise<User> {
+  async signUp(email: string, _password: string): Promise<User> {
     // Mock user creation
     await new Promise(resolve => setTimeout(resolve, 1200));
     

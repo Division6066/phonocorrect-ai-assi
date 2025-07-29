@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useKV } from './use-kv';
 
 export interface WhisperConfig {
   language: string;
@@ -44,13 +45,13 @@ const initializeMLCore = async () => {
     // Detect environment and load appropriate bridge
     if (typeof window !== 'undefined') {
       // Web environment
-      const { GemmaBridge: WebBridge } = await import('../../packages/ml-core/src/web/GemmaBridge');
-      await WebBridge.loadWasm();
-      GemmaBridge = WebBridge;
+      // const { GemmaBridge: WebBridge } = await import('../../packages/ml-core/src/web/GemmaBridge');
+      // await WebBridge.loadWasm();
+      // GemmaBridge = WebBridge;
     } else if (typeof process !== 'undefined' && process.versions?.electron) {
       // Electron environment
-      const { GemmaBridge: ElectronBridge } = await import('../../packages/ml-core/src/electron/GemmaBridge');
-      GemmaBridge = ElectronBridge;
+      // const { GemmaBridge: ElectronBridge } = await import('../../packages/ml-core/src/electron/GemmaBridge');
+      // GemmaBridge = ElectronBridge;
     } else {
       console.warn('[ML Models] ML Core not available in this environment');
       return null;
@@ -78,7 +79,7 @@ class WhisperModel {
     this.isLoaded = true;
   }
 
-  async transcribe(audioBlob: Blob): Promise<string> {
+  async transcribe(_audioBlob: Blob): Promise<string> {
     if (!this.isLoaded) throw new Error('Model not loaded');
     
     // Mock transcription - in reality this would process audio through Whisper
@@ -97,7 +98,7 @@ class WhisperModel {
            mockTranscriptions['en'];
   }
 
-  async transcribeRealtime(stream: MediaStream): Promise<AsyncGenerator<string>> {
+  async transcribeRealtime(_stream: MediaStream): Promise<AsyncGenerator<string>> {
     if (!this.isLoaded) throw new Error('Model not loaded');
     
     async function* generator() {
@@ -164,7 +165,7 @@ class GemmaModel {
     return correctedText;
   }
 
-  async enhanceText(text: string, context: string = ''): Promise<string> {
+  async enhanceText(text: string, _context: string = ''): Promise<string> {
     if (!this.isLoaded) throw new Error('Model not loaded');
     
     // Mock text enhancement
