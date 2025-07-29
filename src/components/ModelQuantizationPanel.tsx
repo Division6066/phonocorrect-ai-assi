@@ -1,24 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Brain, 
   Download, 
   CheckCircle, 
-  XCircle, 
-  AlertTriangle,
-  Info,
+  Warning as AlertTriangle,
   Trash,
   Play,
-  Stop,
   CircleNotch,
   Lightning,
-  Cpu,
   Gauge,
   ArrowRight,
   ChartBar,
@@ -33,8 +28,30 @@ import {
 import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
 
+// Type definitions for better type safety
+interface QuantizationLevel {
+  name: string;
+  description: string;
+  compression: number;
+  speed: number;
+  accuracy: number;
+  memoryUsage: number;
+  fileSize: number;
+  color: string;
+  icon: any;
+  pros: string[];
+  cons: string[];
+}
+
+interface ModelVariant {
+  name: string;
+  type: string;
+  baseSize: number;
+  variants: string[];
+}
+
 // Model quantization configurations
-const QUANTIZATION_LEVELS = {
+const QUANTIZATION_LEVELS: Record<string, QuantizationLevel> = {
   '4bit': {
     name: '4-bit Quantization',
     description: 'Extremely compressed, fastest inference, lowest accuracy',
@@ -90,7 +107,7 @@ const QUANTIZATION_LEVELS = {
 };
 
 // Mock model configurations for different quantization levels
-const MODEL_VARIANTS = {
+const MODEL_VARIANTS: Record<string, ModelVariant> = {
   'gemma-2b': {
     name: 'Gemma 2B',
     type: 'Language Model',
@@ -222,7 +239,7 @@ export const ModelQuantizationPanel: React.FC = () => {
     const newResults: BenchmarkResult[] = [];
 
     for (const variant of modelVariants) {
-      const [model, quantization] = variant.split('-').slice(-1);
+      const [, quantization] = variant.split('-').slice(-1);
       const quantConfig = QUANTIZATION_LEVELS[quantization] || QUANTIZATION_LEVELS['8bit'];
       
       // Simulate benchmark

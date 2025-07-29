@@ -12,6 +12,7 @@ export interface Suggestion {
   pattern: string;
   startIndex: number;
   endIndex: number;
+  explanation?: string;
 }
 
 export interface UserPreference {

@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     lastLoginAt: new Date()
   };
 
-  const signInWithEmail = async (email: string, password: string) => {
+  const signInWithEmail = async (_email: string, _password: string) => {
     setLoading(true);
     // Simulate API call
     setTimeout(() => {
@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, 1000);
   };
 
-  const signUpWithEmail = async (email: string, password: string, displayName: string) => {
+  const signUpWithEmail = async (email: string, _password: string, displayName: string) => {
     setLoading(true);
     setTimeout(() => {
       setUser({ ...mockUser, email, displayName });

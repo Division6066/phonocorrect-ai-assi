@@ -6,8 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext-mock';
 import { AuthDialog } from './AuthDialog';
-import { User, SignOut, Crown, Settings, CreditCard } from '@phosphor-icons/react';
-import { toast } from 'sonner';
+import { User, SignOut, Crown, Gear as Settings, CreditCard } from '@phosphor-icons/react';
 
 export const UserProfileCard: React.FC = () => {
   const { user, userProfile, logout, isPremium } = useAuth();

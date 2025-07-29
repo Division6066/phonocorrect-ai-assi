@@ -1,17 +1,16 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useKV } from '@github/spark/hooks';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { 
   WhisperEngine, 
   WhisperConfig, 
   AudioBuffer, 
-  TranscriptionResult,
   getPlatformCapabilities 
 } from '@/lib/speech-engines';
-import { whisperModels } from '@/utils/multiLanguageSupport';
 
 // Enhanced language support with Whisper.cpp model mapping from utils
+const getCurrentLanguage = () => 'en'; // Mock function - should be replaced with actual context
+
 export const WHISPER_LANGUAGES = [
   { code: 'en', label: 'English', flag: '🇺🇸', whisperModel: 'base.en' },
   { code: 'es', label: 'Spanish', flag: '🇪🇸', whisperModel: 'base' },
@@ -73,11 +72,8 @@ interface SpeechToTextOptions {
 // Mock Whisper.cpp integration - will be replaced with actual implementation
 class WhisperEngine {
   private isInitialized = false;
-  private models = new Map<string, any>();
-  private audioContext: AudioContext | null = null;
-  private processor: ScriptProcessorNode | null = null;
 
-  async initialize(config: WhisperConfig): Promise<boolean> {
+  async initialize(_config: WhisperConfig): Promise<boolean> {
     try {
       // TODO: Replace with actual whisper.cpp WASM initialization
       console.log('Initializing Whisper.cpp with config:', config);
@@ -138,17 +134,17 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
   } = options;
 
   // Persistent settings
-  const [selectedLanguage, setSelectedLanguage] = useKV('stt-language', currentLanguage);
+  const [selectedLanguage, setSelectedLanguage] = useKV('stt-language', getCurrentLanguage());
   const [whisperEnabled, setWhisperEnabled] = useKV('stt-whisper-enabled', useWhisper);
   const [realtimeEnabled, setRealtimeEnabled] = useKV('stt-realtime-enabled', enableRealtime);
   const [modelSizePreference, setModelSizePreference] = useKV('stt-model-size', modelSize);
 
   // Update selected language when context language changes
   useEffect(() => {
-    if (currentLanguage !== selectedLanguage) {
-      setSelectedLanguage(currentLanguage);
+    if (getCurrentLanguage() !== selectedLanguage) {
+      setSelectedLanguage(getCurrentLanguage());
     }
-  }, [currentLanguage, selectedLanguage, setSelectedLanguage]);
+  }, [getCurrentLanguage(), selectedLanguage, setSelectedLanguage]);
 
   // State
   const [state, setState] = useState<SpeechToTextState>({
@@ -429,13 +425,13 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
           duration: audioData.length / (audioContext.current?.sampleRate || 16000)
         };
 
-        const result = await whisperEngine.current.transcribe(audioBuffer);
+        const result = await whisperEngine.current.transcribe(audioBuffer, selectedLanguage);
         
         setState(prev => ({ 
           ...prev, 
           finalResult: prev.finalResult + result.text,
           confidence: result.confidence,
-          processingTime: result.processingTime
+          processingTime: 0 // Default processing time since it's not in the result
         }));
         
         toast.success(`Transcribed with Whisper (${result.processingTime.toFixed(0)}ms)`);

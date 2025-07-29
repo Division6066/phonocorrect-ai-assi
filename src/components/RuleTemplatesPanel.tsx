@@ -18,8 +18,8 @@ import { useCustomRules } from "@/hooks/use-custom-rules";
 import { CustomRule } from "@/types/custom-rules";
 import { generateId } from "@/utils/id-utils";
 import { 
-  Template,
-  Search, 
+  FileText as Template,
+  MagnifyingGlass as Search, 
   Plus, 
   Check,
   BookOpen,

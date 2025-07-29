@@ -1,27 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Brain, 
   Lightning, 
   Scales, 
-  Clock, 
-  Database, 
-  HardDrives, 
   Sparkle,
   Play,
-  Stop,
   ArrowRight,
-  TrendUp,
-  TrendDown,
-  CheckCircle,
   CircleNotch,
   Gauge,
-  Battery,
   DeviceMobile,
   Desktop,
   Globe,

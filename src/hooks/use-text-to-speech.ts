@@ -1,14 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useKV } from '@github/spark/hooks';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { 
   CoquiEngine, 
   CoquiConfig, 
-  SynthesisResult,
   getPlatformCapabilities 
 } from '@/lib/speech-engines';
-import { coquiVoices } from '@/utils/multiLanguageSupport';
 
 // Voice configurations for different TTS engines
 export interface Voice {
@@ -141,8 +138,6 @@ interface TextToSpeechState {
 // Mock Coqui TTS engine - will be replaced with actual implementation
 class CoquiTTSEngine {
   private isInitialized = false;
-  private models = new Map<string, any>();
-  private audioContext: AudioContext | null = null;
 
   async initialize(): Promise<boolean> {
     try {
@@ -213,7 +208,7 @@ class CoquiTTSEngine {
 }
 
 export function useTextToSpeech(options: TTSOptions = {}) {
-  const { currentLanguage, t } = useLanguage();
+  const { currentLanguage } = useLanguage();
   
   // Persistent settings
   const [selectedVoice, setSelectedVoice] = useKV('tts-voice', coquiVoices[currentLanguage]?.default || 'browser-auto');
@@ -471,7 +466,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           isLoading: false, 
           isPlaying: true,
           totalDuration: result.audioBuffer.duration,
-          processingTime: result.processingTime
+          processingTime: 0 // Mock processing time since it may not be available
         }));
 
         startTime.current = Date.now();

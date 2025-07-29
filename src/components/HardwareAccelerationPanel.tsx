@@ -11,7 +11,6 @@ import {
   Warning, 
   Info, 
   Cpu, 
-  Lightning as Gpu,
   Download,
   X,
   Trash,
@@ -21,7 +20,6 @@ import {
   XCircle
 } from "@phosphor-icons/react";
 import { usePerformanceOptimization } from '@/hooks/use-performance-optimization';
-import { toast } from 'sonner';
 
 export const HardwareAccelerationPanel: React.FC = () => {
   const {

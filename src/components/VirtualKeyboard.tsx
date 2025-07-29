@@ -11,8 +11,7 @@ interface VirtualKeyboardProps {
 
 export const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
   onInput,
-  onSpecialKey,
-  targetRef
+  onSpecialKey
 }) => {
   const keys = [
     ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],

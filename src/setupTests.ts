@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
 // Mock the global spark object for testing
-global.spark = {
+(global as any).spark = {
   llmPrompt: (strings: string[], ...values: any[]) => {
     return strings.reduce((acc, str, i) => acc + str + (values[i] || ''), '');
   },
@@ -28,8 +28,8 @@ global.spark = {
       if (key === 'test-data') return { value: 'test' };
       return undefined;
     },
-    set: async (key: string, value: any) => {},
-    delete: async (key: string) => {}
+    set: async (_key: string, _value: any) => {},
+    delete: async (_key: string) => {}
   }
 };
 
@@ -41,11 +41,15 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+(global as any).IntersectionObserver = class IntersectionObserver {
+  root = null;
+  rootMargin = '';
+  thresholds = [];
   constructor() {}
   observe() {}
   unobserve() {}
   disconnect() {}
+  takeRecords() { return []; }
 };
 
 // Mock window.matchMedia

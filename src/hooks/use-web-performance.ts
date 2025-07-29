@@ -189,7 +189,7 @@ export function useWebPerformance() {
         domContentLoaded: navigation?.domContentLoadedEventEnd - navigation?.domContentLoadedEventStart,
         load: navigation?.loadEventEnd - navigation?.loadEventStart,
         firstByte: navigation?.responseStart - navigation?.requestStart,
-        domComplete: navigation?.domComplete - navigation?.navigationStart
+        domComplete: navigation?.domComplete - navigation?.fetchStart
       },
       paint: {
         firstPaint: paint.find(p => p.name === 'first-paint')?.startTime || 0,

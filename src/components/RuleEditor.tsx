@@ -70,6 +70,9 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
           .split('\n')
           .map(ex => ex.trim())
           .filter(ex => ex)
+          .split('\n')
+          .map(ex => ex.trim())
+          .filter(ex => ex)
       };
 
       let savedRule: CustomRule;

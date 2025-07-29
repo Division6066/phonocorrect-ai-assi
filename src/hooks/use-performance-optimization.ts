@@ -91,7 +91,7 @@ const detectDeviceSpecs = (): DeviceSpecs => {
 
   const gpuVendor = (() => {
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext | null;
     if (gl) {
       const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
       if (debugInfo) {
@@ -190,7 +190,7 @@ export function usePerformanceOptimization() {
   const [deviceSpecs] = useState<DeviceSpecs>(() => detectDeviceSpecs());
   const [currentAcceleration, setCurrentAcceleration] = useKV<string>('current-acceleration', 'cpu');
   const [downloadedModels, setDownloadedModels] = useKV<string[]>('downloaded-models', []);
-  const [modelConfigs, setModelConfigs] = useKV<{ whisper: ModelConfig; gemma: ModelConfig }>('model-configs', () => getOptimalModelConfigs(deviceSpecs));
+  const [modelConfigs, setModelConfigs] = useKV<{ whisper: ModelConfig; gemma: ModelConfig }>('model-configs', getOptimalModelConfigs(deviceSpecs));
   
   const [accelerationMethods, setAccelerationMethods] = useState<AccelerationMethod[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>({

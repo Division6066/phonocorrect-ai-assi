@@ -541,18 +541,18 @@ export function useCloudSync() {
     const hasAccess = isPremium || isTrialing;
     
     return {
-      cloudSync: hasAccess,
-      advancedML: hasAccess,
-      multiDevice: hasAccess,
-      prioritySupport: hasAccess,
-      exportFormats: hasAccess,
-      voiceCloning: hasAccess,
-      unlimitedStorage: isPremium, // Trial users get limited storage
-      batchProcessing: isPremium,
-      apiAccess: isPremium && syncState.user?.planType === 'yearly',
-      customVoices: isPremium,
-      offlineML: hasAccess,
-      documentHistory: hasAccess
+      cloudSync: hasAccess || false,
+      advancedML: hasAccess || false,
+      multiDevice: hasAccess || false,
+      prioritySupport: hasAccess || false,
+      exportFormats: hasAccess || false,
+      voiceCloning: hasAccess || false,
+      unlimitedStorage: isPremium || false, // Trial users get limited storage
+      batchProcessing: isPremium || false,
+      apiAccess: (isPremium && syncState.user?.planType === 'yearly') || false,
+      customVoices: isPremium || false,
+      offlineML: hasAccess || false,
+      documentHistory: hasAccess || false
     };
   }, [syncState.user?.isPremium, syncState.user?.trialEnds, syncState.user?.planType]);
 
