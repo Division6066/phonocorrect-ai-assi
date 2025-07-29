@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals';
 
 export interface WebVitalsMetric {
   name: string;
@@ -189,7 +189,7 @@ export function useWebPerformance() {
         domContentLoaded: navigation?.domContentLoadedEventEnd - navigation?.domContentLoadedEventStart,
         load: navigation?.loadEventEnd - navigation?.loadEventStart,
         firstByte: navigation?.responseStart - navigation?.requestStart,
-        domComplete: navigation?.domComplete - navigation?.navigationStart
+        domComplete: navigation?.domComplete - navigation?.fetchStart
       },
       paint: {
         firstPaint: paint.find(p => p.name === 'first-paint')?.startTime || 0,

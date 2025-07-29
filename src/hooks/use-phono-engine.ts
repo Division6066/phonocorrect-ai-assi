@@ -39,7 +39,7 @@ export const usePhonoEngine = (text: string) => {
   });
 
   // Get custom rules hook
-  const { applyCustomRules, recordRuleUsage } = useCustomRules();
+  const { applyCustomRules } = useCustomRules();
 
   useEffect(() => {
     if (!text.trim()) {
@@ -95,19 +95,19 @@ export const usePhonoEngine = (text: string) => {
       const textToCheck = customCorrectedText || text;
       builtinPatterns.forEach(({ from, to, pattern }) => {
         const regex = new RegExp(`\\b${from}\\b`, 'gi');
-        let match;
+        let match: RegExpExecArray | null;
         while ((match = regex.exec(textToCheck)) !== null) {
           // Check if this word was already corrected by custom rules
           const alreadyCorrected = mockSuggestions.some(s => 
-            s.startIndex <= match.index && s.endIndex >= match.index + match[0].length
+            s.startIndex <= match!.index && s.endIndex >= match!.index + match![0].length
           );
           
           if (!alreadyCorrected) {
             mockSuggestions.push({
-              original: match[0],
+              original: match![0],
               suggestion: to,
-              startIndex: match.index,
-              endIndex: match.index + match[0].length,
+              startIndex: match!.index,
+              endIndex: match!.index + match![0].length,
               pattern,
               confidence: 0.85 + Math.random() * 0.1,
               explanation: `Built-in phonetic correction: "${from}" → "${to}"`

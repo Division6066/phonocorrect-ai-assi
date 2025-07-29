@@ -9,15 +9,15 @@ import {
   CheckCircle, 
   XCircle, 
   Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle,
-  RefreshCw,
+  TrendUp as TrendingUp, 
+  TrendDown as TrendingDown, 
+  Warning as AlertTriangle,
+  ArrowClockwise as RefreshCw,
+  Browser as Chrome,
   Download,
-  Chrome,
   Globe,
   Monitor,
-  Smartphone
+  DeviceMobile as Smartphone
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -73,7 +73,6 @@ export function TestReportingDashboard() {
         const totalTests = Math.floor(Math.random() * 50) + 20;
         const passedTests = Math.floor(totalTests * (baseSuccess + (Math.random() - 0.5) * 0.1));
         const failedTests = Math.floor((totalTests - passedTests) * 0.8);
-        const skippedTests = totalTests - passedTests - failedTests;
 
         results.push({
           id: `${platform}-${suite}-${Date.now()}`,

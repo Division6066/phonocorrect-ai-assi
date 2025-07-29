@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface DeploymentTarget {
   id: string;
@@ -89,7 +89,7 @@ class DeploymentService {
     };
   }
 
-  async publishToAppStore(bundleId: string): Promise<void> {
+  async publishToAppStore(_bundleId: string): Promise<void> {
     await this.mockDelay(5000, 15000);
     
     if (Math.random() < 0.2) {
@@ -97,7 +97,7 @@ class DeploymentService {
     }
   }
 
-  async publishToPlayStore(packageName: string): Promise<void> {
+  async publishToPlayStore(_packageName: string): Promise<void> {
     await this.mockDelay(3000, 8000);
     
     if (Math.random() < 0.15) {
@@ -105,7 +105,7 @@ class DeploymentService {
     }
   }
 
-  async publishToChromeWebStore(extensionId: string): Promise<void> {
+  async publishToChromeWebStore(_extensionId: string): Promise<void> {
     await this.mockDelay(2000, 5000);
     
     if (Math.random() < 0.1) {

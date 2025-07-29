@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { 
-  AlertTriangle, 
+  Warning as AlertTriangle, 
   CheckCircle, 
-  TrendingDown, 
-  TrendingUp, 
+  TrendDown as TrendingDown, 
+  TrendUp as TrendingUp, 
   Clock, 
   Brain,
-  Zap,
+  Lightning as Zap,
   Eye,
   Bell,
-  Settings,
-  Activity
+  Pulse as Activity
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
@@ -235,7 +234,7 @@ export function PerformanceRegressionAlerts() {
             variant="outline"
             onClick={() => setIsMonitoring(!isMonitoring)}
           >
-            <Settings size={14} className="mr-1" />
+            <Cpu size={14} className="mr-1" />
             Configure
           </Button>
         </div>
@@ -343,7 +342,7 @@ export function PerformanceRegressionAlerts() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings size={16} />
+            <Cpu size={16} />
             Alert Thresholds
           </CardTitle>
         </CardHeader>

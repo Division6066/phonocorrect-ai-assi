@@ -1,19 +1,17 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { 
-  AlertTriangle, 
+  Warning as AlertTriangle, 
   CheckCircle, 
-  TrendingDown, 
-  TrendingUp, 
-  Activity,
+  TrendDown as TrendingDown, 
+  TrendUp as TrendingUp, 
+  Pulse as Activity,
   Bell,
   Download,
-  RefreshCw,
-  Settings
+  ArrowClockwise as RefreshCw
 } from "@phosphor-icons/react";
 import { usePerformanceMonitoring } from "@/hooks/use-performance-monitoring";
 import { toast } from "sonner";

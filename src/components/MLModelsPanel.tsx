@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,12 +10,10 @@ import {
   Download, 
   CheckCircle, 
   XCircle, 
-  AlertTriangle,
+  Warning as AlertTriangle,
   Info,
   Trash,
-  Settings,
   Play,
-  Stop,
   CircleNotch,
   Lightning,
   Cpu,
@@ -219,7 +217,7 @@ export const MLModelsPanel: React.FC = () => {
                       </Button>
                     )}
                     <Button size="sm" variant="ghost">
-                      <Settings size={14} />
+                      <Cpu size={14} />
                     </Button>
                   </div>
                 </div>
@@ -263,31 +261,32 @@ export const MLModelsPanel: React.FC = () => {
             {/* Available Downloads */}
             <div className="space-y-2">
               {Object.entries(modelConfigs).map(([type, config]) => {
-                const modelId = `${config.name}-${config.size}-${config.quantization}`;
+                const typedConfig = config as ModelConfig;
+                const modelId = `${typedConfig.name}-${typedConfig.size}-${typedConfig.quantization}`;
                 const isDownloaded = downloadedModels.includes(modelId);
                 
                 return (
                   <div key={type} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm capitalize">{config.name}</span>
-                        <Badge variant="outline" className="text-xs">{config.size}</Badge>
-                        <Badge variant="outline" className="text-xs">{config.quantization}</Badge>
+                        <span className="font-medium text-sm capitalize">{typedConfig.name}</span>
+                        <Badge variant="outline" className="text-xs">{typedConfig.size}</Badge>
+                        <Badge variant="outline" className="text-xs">{typedConfig.quantization}</Badge>
                         {isDownloaded && (
                           <Badge className="bg-green-100 text-green-800 text-xs">Downloaded</Badge>
                         )}
-                        {config.optimizations.length > 0 && (
+                        {typedConfig.optimizations && typedConfig.optimizations.length > 0 && (
                           <Badge variant="outline" className="text-xs bg-yellow-50">
                             <Lightning size={8} className="mr-1" />
-                            {config.optimizations.length} opts
+                            {typedConfig.optimizations.length} opts
                           </Badge>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Size: {formatBytes(config.fileSize)}
-                        {config.optimizations.length > 0 && (
+                        Size: {formatBytes(typedConfig.fileSize)}
+                        {typedConfig.optimizations && typedConfig.optimizations.length > 0 && (
                           <span className="ml-2">
-                            Optimizations: {config.optimizations.join(', ')}
+                            Optimizations: {typedConfig.optimizations.join(', ')}
                           </span>
                         )}
                       </div>
@@ -297,7 +296,7 @@ export const MLModelsPanel: React.FC = () => {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => downloadModel(config)}
+                          onClick={() => downloadModel(typedConfig)}
                           disabled={!!downloadProgress}
                         >
                           <Download size={14} className="mr-1" />

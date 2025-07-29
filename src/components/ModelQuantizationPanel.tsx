@@ -1,24 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Brain, 
   Download, 
   CheckCircle, 
-  XCircle, 
-  AlertTriangle,
-  Info,
+  Warning as AlertTriangle,
   Trash,
   Play,
-  Stop,
   CircleNotch,
   Lightning,
-  Cpu,
   Gauge,
   ArrowRight,
   ChartBar,
@@ -30,11 +25,33 @@ import {
   Scales,
   Lightbulb
 } from "@phosphor-icons/react";
-import { useKV } from '@github/spark/hooks';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
+// Type definitions for better type safety
+interface QuantizationLevel {
+  name: string;
+  description: string;
+  compression: number;
+  speed: number;
+  accuracy: number;
+  memoryUsage: number;
+  fileSize: number;
+  color: string;
+  icon: any;
+  pros: string[];
+  cons: string[];
+}
+
+interface ModelVariant {
+  name: string;
+  type: string;
+  baseSize: number;
+  variants: string[];
+}
+
 // Model quantization configurations
-const QUANTIZATION_LEVELS = {
+const QUANTIZATION_LEVELS: Record<string, QuantizationLevel> = {
   '4bit': {
     name: '4-bit Quantization',
     description: 'Extremely compressed, fastest inference, lowest accuracy',
@@ -90,7 +107,7 @@ const QUANTIZATION_LEVELS = {
 };
 
 // Mock model configurations for different quantization levels
-const MODEL_VARIANTS = {
+const MODEL_VARIANTS: Record<string, ModelVariant> = {
   'gemma-2b': {
     name: 'Gemma 2B',
     type: 'Language Model',
@@ -131,9 +148,9 @@ interface BenchmarkResult {
 }
 
 export const ModelQuantizationPanel: React.FC = () => {
-  const [downloadedModels, setDownloadedModels] = useKV('downloaded-quantized-models', [] as string[]);
+  const [downloadedModels, setDownloadedModels] = useState<string[]>([]);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
-  const [benchmarkResults, setBenchmarkResults] = useKV('quantization-benchmarks', [] as BenchmarkResult[]);
+  const [benchmarkResults, setBenchmarkResults] = useState<BenchmarkResult[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('gemma-2b');
   const [activeTab, setActiveTab] = useState('download');
   const [isRunningBenchmark, setIsRunningBenchmark] = useState(false);
@@ -195,14 +212,14 @@ export const ModelQuantizationPanel: React.FC = () => {
     setTimeout(() => {
       clearInterval(interval);
       setDownloadProgress(null);
-      setDownloadedModels(prev => [...prev, downloadId]);
+      setDownloadedModels((prev: string[]) => [...prev, downloadId]);
       toast.success(`${quantConfig.name} model downloaded successfully!`);
     }, 3000 + Math.random() * 2000);
   };
 
   // Delete model
   const deleteModel = (modelId: string) => {
-    setDownloadedModels(prev => prev.filter(id => id !== modelId));
+    setDownloadedModels((prev: string[]) => prev.filter((id: string) => id !== modelId));
     toast.success('Model deleted');
   };
 
@@ -222,7 +239,7 @@ export const ModelQuantizationPanel: React.FC = () => {
     const newResults: BenchmarkResult[] = [];
 
     for (const variant of modelVariants) {
-      const [model, quantization] = variant.split('-').slice(-1);
+      const [, quantization] = variant.split('-').slice(-1);
       const quantConfig = QUANTIZATION_LEVELS[quantization] || QUANTIZATION_LEVELS['8bit'];
       
       // Simulate benchmark
@@ -241,8 +258,8 @@ export const ModelQuantizationPanel: React.FC = () => {
       newResults.push(result);
     }
 
-    setBenchmarkResults(prev => [
-      ...prev.filter(r => !newResults.find(nr => nr.modelId === r.modelId)),
+    setBenchmarkResults((prev: BenchmarkResult[]) => [
+      ...prev.filter((r: BenchmarkResult) => !newResults.find((nr: BenchmarkResult) => nr.modelId === r.modelId)),
       ...newResults
     ]);
     
@@ -252,8 +269,8 @@ export const ModelQuantizationPanel: React.FC = () => {
 
   // Get model variants info
   const getModelInfo = (modelId: string) => {
-    const variants = downloadedModels.filter(id => id.startsWith(modelId));
-    const totalSize = variants.reduce((sum, variant) => {
+    const variants = downloadedModels.filter((id: string) => id.startsWith(modelId));
+    const totalSize = variants.reduce((sum: number, variant: string) => {
       const [, quantization] = variant.split('-').slice(-1);
       const quantConfig = QUANTIZATION_LEVELS[quantization] || QUANTIZATION_LEVELS['8bit'];
       return sum + (MODEL_VARIANTS[modelId].baseSize / quantConfig.compression);

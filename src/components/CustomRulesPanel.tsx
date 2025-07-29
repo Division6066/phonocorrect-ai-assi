@@ -132,7 +132,7 @@ export function CustomRulesPanel() {
       const text = await importFile.text();
       const importData = JSON.parse(text);
       
-      const _result = await importRules(importData, { 
+      await importRules(importData, { 
         overwrite,
         skipDuplicates: !overwrite 
       });

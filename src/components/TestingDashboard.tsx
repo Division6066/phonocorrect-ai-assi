@@ -7,21 +7,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   TestTube, 
-  Smartphone, 
+  DeviceMobile as Smartphone, 
   Globe, 
-  Puzzle, 
+  PuzzlePiece as Puzzle, 
   CheckCircle, 
   XCircle, 
   Clock, 
   Play,
+  Square,
+  Cpu as Apple,
+  Browser as Chrome, 
+  Play,
   Download,
   GitBranch,
   Monitor,
-  Chrome,
-  Apple,
   ChartLine,
-  Bell,
-  Activity
+  Bell
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { TestReportingDashboard } from "./TestReportingDashboard";

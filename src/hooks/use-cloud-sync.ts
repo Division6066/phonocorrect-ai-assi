@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useState, useEffect } from 'react';
 
 export interface User {
   id: string;
@@ -321,7 +321,7 @@ export function useCloudSync() {
     deviceCount: 1
   });
 
-  const [localData, setLocalData] = useKV('local-user-data', {
+  const [localData, setLocalData] = useState({
     preferences: [],
     documents: [],
     settings: {}
@@ -541,23 +541,23 @@ export function useCloudSync() {
     const hasAccess = isPremium || isTrialing;
     
     return {
-      cloudSync: hasAccess,
-      advancedML: hasAccess,
-      multiDevice: hasAccess,
-      prioritySupport: hasAccess,
-      exportFormats: hasAccess,
-      voiceCloning: hasAccess,
-      unlimitedStorage: isPremium, // Trial users get limited storage
-      batchProcessing: isPremium,
-      apiAccess: isPremium && syncState.user?.planType === 'yearly',
-      customVoices: isPremium,
-      offlineML: hasAccess,
-      documentHistory: hasAccess
+      cloudSync: hasAccess || false,
+      advancedML: hasAccess || false,
+      multiDevice: hasAccess || false,
+      prioritySupport: hasAccess || false,
+      exportFormats: hasAccess || false,
+      voiceCloning: hasAccess || false,
+      unlimitedStorage: isPremium || false, // Trial users get limited storage
+      batchProcessing: isPremium || false,
+      apiAccess: (isPremium && syncState.user?.planType === 'yearly') || false,
+      customVoices: isPremium || false,
+      offlineML: hasAccess || false,
+      documentHistory: hasAccess || false
     };
   }, [syncState.user?.isPremium, syncState.user?.trialEnds, syncState.user?.planType]);
 
   const updateLocalData = useCallback((updates: Partial<typeof localData>) => {
-    setLocalData(prev => ({ ...prev, ...updates }));
+    setLocalData((prev: typeof localData) => ({ ...prev, ...updates }));
     
     // Auto-sync after local changes if premium
     if (syncState.user?.isPremium && syncState.connectionStatus === 'online') {
