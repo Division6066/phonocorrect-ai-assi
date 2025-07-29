@@ -457,11 +457,11 @@ export class CoquiEngine {
  * Integration with the ML-Core package for phonetic corrections
  */
 export class GemmaEngine {
-  private config: GemmaConfig | null = null;
   private isInitialized = false;
 
-  async initialize(config: GemmaConfig): Promise<boolean> {
-    this.config = config;
+  async initialize(_config: GemmaConfig): Promise<boolean> {
+    // Store config for future use
+    // this._config = config;
     
     try {
       console.log('Initializing Gemma 2B for phonetic corrections...');

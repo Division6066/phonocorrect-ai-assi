@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useKV } from './use-kv';
 import { 
   WhisperConfig, 
   AudioBuffer, 
@@ -134,17 +135,22 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
   } = options;
 
   // Persistent settings
-  const [selectedLanguage, setSelectedLanguage] = useKV('stt-language', getCurrentLanguage());
+  const [selectedLanguage, setSelectedLanguage] = useKV('stt-language', 'en');
   const [whisperEnabled, setWhisperEnabled] = useKV('stt-whisper-enabled', useWhisper);
   const [realtimeEnabled, setRealtimeEnabled] = useKV('stt-realtime-enabled', enableRealtime);
   const [modelSizePreference, setModelSizePreference] = useKV('stt-model-size', modelSize);
 
+  // Helper function
+  const getCurrentLanguage = () => {
+    return WHISPER_LANGUAGES.find(lang => lang.code === selectedLanguage) || WHISPER_LANGUAGES[0];
+  };
+
   // Update selected language when context language changes
   useEffect(() => {
-    if (getCurrentLanguage() !== selectedLanguage) {
-      setSelectedLanguage(getCurrentLanguage());
+    if (getCurrentLanguage().code !== selectedLanguage) {
+      setSelectedLanguage(getCurrentLanguage().code);
     }
-  }, [getCurrentLanguage(), selectedLanguage, setSelectedLanguage]);
+  }, [getCurrentLanguage, selectedLanguage, setSelectedLanguage]);
 
   // State
   const [state, setState] = useState<SpeechToTextState>({
@@ -425,7 +431,8 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
           duration: audioData.length / (audioContext.current?.sampleRate || 16000)
         };
 
-        const result = await whisperEngine.current.transcribe(audioBuffer, selectedLanguage);
+        // Convert AudioBuffer to Float32Array
+        const result = await whisperEngine.current.transcribe(audioBuffer.data, selectedLanguage);
         
         setState(prev => ({ 
           ...prev, 
@@ -434,7 +441,7 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
           processingTime: 0 // Default processing time since it's not in the result
         }));
         
-        toast.success(`Transcribed with Whisper (${result.processingTime.toFixed(0)}ms)`);
+        toast.success(`Transcribed with Whisper (${result.confidence.toFixed(2)})`);  
       } catch (error) {
         console.error('Whisper transcription failed:', error);
         setState(prev => ({ ...prev, error: 'Whisper transcription failed' }));
@@ -487,10 +494,6 @@ export function useSpeechToText(options: SpeechToTextOptions = {}) {
       default:
         return 'Speech recognition error occurred.';
     }
-  };
-
-  const getCurrentLanguage = () => {
-    return WHISPER_LANGUAGES.find(lang => lang.code === selectedLanguage) || WHISPER_LANGUAGES[0];
   };
 
   const isSupported = () => {

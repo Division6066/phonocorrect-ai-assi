@@ -372,12 +372,12 @@ class NativeCoquiEngine implements SpeechEngine {
     return false;
   }
 
-  async transcribe(audioData: Float32Array, language: string): Promise<{ text: string; confidence: number }> {
+  async transcribe(_audioData: Float32Array, _language: string): Promise<{ text: string; confidence: number }> {
     throw new Error('Coqui is for text-to-speech, not transcription');
   }
 
-  async synthesize(text: string, voice: string, options: any): Promise<ArrayBuffer> {
-    console.log('Synthesizing with Native Coqui:', { text, voice, options });
+  async synthesize(_text: string, _voice: string, _options: any): Promise<ArrayBuffer> {
+    console.log('Synthesizing with Native Coqui:', { text: _text, voice: _voice, options: _options });
     // TODO: Call native synthesis
     return new ArrayBuffer(0);
   }
@@ -397,13 +397,13 @@ class MobileWhisperEngine implements SpeechEngine {
     return false;
   }
 
-  async transcribe(audioData: Float32Array, language: string): Promise<{ text: string; confidence: number }> {
-    console.log('Transcribing with Mobile Whisper:', { audioLength: audioData.length, language });
+  async transcribe(_audioData: Float32Array, _language: string): Promise<{ text: string; confidence: number }> {
+    console.log('Transcribing with Mobile Whisper:', { audioLength: _audioData.length, language: _language });
     // TODO: Call mobile transcription
     return { text: 'Mobile transcription', confidence: 0.96 };
   }
 
-  async synthesize(text: string, voice: string, options: any): Promise<ArrayBuffer> {
+  async synthesize(_text: string, _voice: string, _options: any): Promise<ArrayBuffer> {
     throw new Error('Whisper is for speech-to-text, not synthesis');
   }
 
@@ -422,12 +422,12 @@ class MobileCoquiEngine implements SpeechEngine {
     return false;
   }
 
-  async transcribe(audioData: Float32Array, language: string): Promise<{ text: string; confidence: number }> {
+  async transcribe(_audioData: Float32Array, _language: string): Promise<{ text: string; confidence: number }> {
     throw new Error('Coqui is for text-to-speech, not transcription');
   }
 
-  async synthesize(text: string, voice: string, options: any): Promise<ArrayBuffer> {
-    console.log('Synthesizing with Mobile Coqui:', { text, voice, options });
+  async synthesize(_text: string, _voice: string, _options: any): Promise<ArrayBuffer> {
+    console.log('Synthesizing with Mobile Coqui:', { text: _text, voice: _voice, options: _options });
     // TODO: Call mobile synthesis
     return new ArrayBuffer(0);
   }

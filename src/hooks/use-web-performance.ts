@@ -54,11 +54,11 @@ export function useWebPerformance() {
     };
 
     // Monitor Core Web Vitals
-    getCLS(handleMetric);
-    getFID(handleMetric);
-    getFCP(handleMetric);
-    getLCP(handleMetric);
-    getTTFB(handleMetric);
+    onCLS(handleMetric);
+    onFID(handleMetric);
+    onFCP(handleMetric);
+    onLCP(handleMetric);
+    onTTFB(handleMetric);
 
     return () => {
       // Cleanup observers if needed

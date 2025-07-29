@@ -213,8 +213,8 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           
           const initialized = await coquiEngine.current.initialize(coquiConfig);
           if (initialized) {
-            const coquiVoices = await coquiEngine.current.getAvailableVoices();
-            allVoices = [...allVoices, ...coquiVoices];
+            // const coquiVoices = await coquiEngine.current.getAvailableVoices();
+            // allVoices = [...allVoices, ...coquiVoices];
             setState(prev => ({ ...prev, modelStatus: 'ready' }));
             toast.success('Coqui TTS models loaded');
           } else {
@@ -349,7 +349,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
 
       const finalOptions = { ...options, ...overrideOptions };
       const processedText = preprocess(text, voice);
-      const startTime = performance.now();
+      const processingStartTime = performance.now();
 
       if (voice.engine === 'coqui' && (state.modelStatus === 'ready' || state.engineType === 'coqui')) {
         // Use Coqui TTS
@@ -390,7 +390,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           }
         };
 
-        const processingTime = performance.now() - startTime;
+        const processingTime = performance.now() - processingStartTime;
         setState(prev => ({ 
           ...prev, 
           isLoading: false, 
@@ -428,7 +428,7 @@ export function useTextToSpeech(options: TTSOptions = {}) {
         utterance.volume = finalOptions.volume || defaultVolume;
 
         utterance.onstart = () => {
-          const processingTime = performance.now() - startTime;
+          const processingTime = performance.now() - processingStartTime;
           setState(prev => ({ 
             ...prev, 
             isLoading: false, 
