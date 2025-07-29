@@ -224,19 +224,20 @@ export const HardwareAccelerationPanel: React.FC = () => {
             {/* Model Configs */}
             <div className="space-y-2">
               {Object.entries(modelConfigs).map(([type, config]) => {
-                const modelId = `${config.name}-${config.size}-${config.quantization}`;
+                const typedConfig = config as ModelConfig;
+                const modelId = `${typedConfig.name}-${typedConfig.size}-${typedConfig.quantization}`;
                 const isDownloaded = downloadedModels.includes(modelId);
                 
                 return (
                   <div key={type} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm capitalize">{config.name}</span>
+                        <span className="font-medium text-sm capitalize">{typedConfig.name}</span>
                         <Badge variant="outline" className="text-xs">
-                          {config.size}
+                          {typedConfig.size}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {config.quantization}
+                          {typedConfig.quantization}
                         </Badge>
                         {isDownloaded && (
                           <Badge variant="outline" className="text-green-600 bg-green-50 text-xs">
@@ -247,10 +248,10 @@ export const HardwareAccelerationPanel: React.FC = () => {
                       </div>
                       
                       <div className="text-xs text-muted-foreground">
-                        Size: {formatBytes(config.fileSize)}
-                        {config.optimizations.length > 0 && (
+                        Size: {formatBytes(typedConfig.fileSize)}
+                        {typedConfig.optimizations && typedConfig.optimizations.length > 0 && (
                           <span className="ml-2">
-                            Optimizations: {config.optimizations.join(', ')}
+                            Optimizations: {typedConfig.optimizations.join(', ')}
                           </span>
                         )}
                       </div>
@@ -261,7 +262,7 @@ export const HardwareAccelerationPanel: React.FC = () => {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => downloadModel(config)}
+                          onClick={() => downloadModel(typedConfig)}
                           disabled={!!downloadProgress}
                         >
                           <Download size={14} className="mr-1" />

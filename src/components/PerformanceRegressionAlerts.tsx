@@ -234,7 +234,7 @@ export function PerformanceRegressionAlerts() {
             variant="outline"
             onClick={() => setIsMonitoring(!isMonitoring)}
           >
-            <Settings size={14} className="mr-1" />
+            <Cpu size={14} className="mr-1" />
             Configure
           </Button>
         </div>
@@ -342,7 +342,7 @@ export function PerformanceRegressionAlerts() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings size={16} />
+            <Cpu size={16} />
             Alert Thresholds
           </CardTitle>
         </CardHeader>

@@ -1,5 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
   CoquiEngine, 
@@ -135,97 +134,28 @@ interface TextToSpeechState {
   processingTime: number;
 }
 
-// Mock Coqui TTS engine - will be replaced with actual implementation
-class CoquiTTSEngine {
-  private isInitialized = false;
-
-  async initialize(): Promise<boolean> {
-    try {
-      // TODO: Replace with actual Coqui TTS initialization
-      console.log('Initializing Coqui TTS...');
-      
-      // Simulate model loading
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      this.audioContext = new AudioContext();
-      this.isInitialized = true;
-      return true;
-    } catch (error) {
-      console.error('Failed to initialize Coqui TTS:', error);
-      return false;
-    }
-  }
-
-  async synthesize(
-    text: string, 
-    voice: Voice, 
-    options: TTSOptions = {}
-  ): Promise<{ audioBuffer: AudioBuffer; wordTimings: Array<{ word: string; start: number; end: number }> }> {
-    if (!this.isInitialized || !this.audioContext) {
-      throw new Error('Coqui TTS engine not initialized');
-    }
-
-    // TODO: Replace with actual Coqui TTS synthesis
-    console.log('Synthesizing with Coqui TTS:', { text, voice: voice.id, options });
-    
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Generate mock audio buffer (silence for now)
-    const duration = Math.max(2, text.length * 0.08); // Estimate duration
-    const sampleRate = this.audioContext.sampleRate;
-    const frameCount = sampleRate * duration;
-    const audioBuffer = this.audioContext.createBuffer(1, frameCount, sampleRate);
-    
-    // Generate simple tone for demo (replace with actual audio)
-    const channelData = audioBuffer.getChannelData(0);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = Math.sin((i / sampleRate) * 440 * 2 * Math.PI) * 0.1;
-    }
-
-    // Generate mock word timings
-    const words = text.split(/\s+/);
-    const wordTimings = words.map((word, index) => ({
-      word,
-      start: (index / words.length) * duration,
-      end: ((index + 1) / words.length) * duration
-    }));
-
-    return { audioBuffer, wordTimings };
-  }
-
-  async getAvailableVoices(): Promise<Voice[]> {
-    // TODO: Replace with actual voice discovery
-    return COQUI_VOICES;
-  }
-
-  cleanup() {
-    if (this.audioContext) {
-      this.audioContext.close();
-    }
-    this.isInitialized = false;
-  }
-}
-
 export function useTextToSpeech(options: TTSOptions = {}) {
-  const { currentLanguage } = useLanguage();
+  // Mock language and voice functions
+  const getCurrentLanguage = useCallback(() => 'en', []);
+  const coquiVoices = { en: { default: 'browser-auto' } };
   
   // Persistent settings
-  const [selectedVoice, setSelectedVoice] = useKV('tts-voice', coquiVoices[currentLanguage]?.default || 'browser-auto');
-  const [defaultRate, setDefaultRate] = useKV('tts-rate', 1.0);
-  const [defaultPitch, setDefaultPitch] = useKV('tts-pitch', 1.0);
-  const [defaultVolume, setDefaultVolume] = useKV('tts-volume', 1.0);
-  const [ssmlEnabled, setSSMLEnabled] = useKV('tts-ssml-enabled', false);
-  const [highlightEnabled, setHighlightEnabled] = useKV('tts-highlight-enabled', true);
-  const [coquiEnabled, setCoquiEnabled] = useKV('tts-coqui-enabled', true);
+  const [selectedVoice, setSelectedVoice] = useState(coquiVoices['en']?.default || 'browser-auto');
+  const [defaultRate, setDefaultRate] = useState(1.0);
+  const [defaultPitch, setDefaultPitch] = useState(1.0);
+  const [defaultVolume, setDefaultVolume] = useState(1.0);
+  const [ssmlEnabled, setSSMLEnabled] = useState(false);
+  const [highlightEnabled, setHighlightEnabled] = useState(true);
+  const [coquiEnabled, setCoquiEnabled] = useState(true);
 
   // Update selected voice when language changes
   useEffect(() => {
+    const currentLanguage = getCurrentLanguage();
     const languageVoices = coquiVoices[currentLanguage];
     if (languageVoices && selectedVoice === 'browser-auto') {
       setSelectedVoice(languageVoices.default);
     }
-  }, [currentLanguage, selectedVoice, setSelectedVoice]);
+  }, [getCurrentLanguage, selectedVoice]);
 
   // State
   const [state, setState] = useState<TextToSpeechState>({
@@ -466,14 +396,14 @@ export function useTextToSpeech(options: TTSOptions = {}) {
           isLoading: false, 
           isPlaying: true,
           totalDuration: result.audioBuffer.duration,
-          processingTime: 0 // Mock processing time since it may not be available
+          processingTime
         }));
 
         startTime.current = Date.now();
         audioSource.current.start();
         updatePosition();
         
-        toast.success(`Synthesized with Coqui TTS (${result.processingTime.toFixed(0)}ms)`);
+        toast.success(`Synthesized with Coqui TTS (${processingTime.toFixed(0)}ms)`);
 
       } else {
         // Use browser speech synthesis

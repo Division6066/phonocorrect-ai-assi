@@ -25,7 +25,7 @@ import {
   Scales,
   Lightbulb
 } from "@phosphor-icons/react";
-import { useKV } from '@github/spark/hooks';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 // Type definitions for better type safety
@@ -148,9 +148,9 @@ interface BenchmarkResult {
 }
 
 export const ModelQuantizationPanel: React.FC = () => {
-  const [downloadedModels, setDownloadedModels] = useKV('downloaded-quantized-models', [] as string[]);
+  const [downloadedModels, setDownloadedModels] = useState<string[]>([]);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
-  const [benchmarkResults, setBenchmarkResults] = useKV('quantization-benchmarks', [] as BenchmarkResult[]);
+  const [benchmarkResults, setBenchmarkResults] = useState<BenchmarkResult[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('gemma-2b');
   const [activeTab, setActiveTab] = useState('download');
   const [isRunningBenchmark, setIsRunningBenchmark] = useState(false);
@@ -212,14 +212,14 @@ export const ModelQuantizationPanel: React.FC = () => {
     setTimeout(() => {
       clearInterval(interval);
       setDownloadProgress(null);
-      setDownloadedModels(prev => [...prev, downloadId]);
+      setDownloadedModels((prev: string[]) => [...prev, downloadId]);
       toast.success(`${quantConfig.name} model downloaded successfully!`);
     }, 3000 + Math.random() * 2000);
   };
 
   // Delete model
   const deleteModel = (modelId: string) => {
-    setDownloadedModels(prev => prev.filter(id => id !== modelId));
+    setDownloadedModels((prev: string[]) => prev.filter((id: string) => id !== modelId));
     toast.success('Model deleted');
   };
 
@@ -258,8 +258,8 @@ export const ModelQuantizationPanel: React.FC = () => {
       newResults.push(result);
     }
 
-    setBenchmarkResults(prev => [
-      ...prev.filter(r => !newResults.find(nr => nr.modelId === r.modelId)),
+    setBenchmarkResults((prev: BenchmarkResult[]) => [
+      ...prev.filter((r: BenchmarkResult) => !newResults.find((nr: BenchmarkResult) => nr.modelId === r.modelId)),
       ...newResults
     ]);
     
@@ -269,8 +269,8 @@ export const ModelQuantizationPanel: React.FC = () => {
 
   // Get model variants info
   const getModelInfo = (modelId: string) => {
-    const variants = downloadedModels.filter(id => id.startsWith(modelId));
-    const totalSize = variants.reduce((sum, variant) => {
+    const variants = downloadedModels.filter((id: string) => id.startsWith(modelId));
+    const totalSize = variants.reduce((sum: number, variant: string) => {
       const [, quantization] = variant.split('-').slice(-1);
       const quantConfig = QUANTIZATION_LEVELS[quantization] || QUANTIZATION_LEVELS['8bit'];
       return sum + (MODEL_VARIANTS[modelId].baseSize / quantConfig.compression);

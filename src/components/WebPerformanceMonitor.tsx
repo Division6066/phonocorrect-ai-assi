@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Play, Square, Trash, Warning as AlertTriangle, CheckCircle, Clock, Lightning as Zap, HardDrives as MemoryStick } from "@phosphor-icons/react";
+import { Play, Square, Warning as AlertTriangle, CheckCircle, Clock, Lightning as Zap, HardDrives as MemoryStick, Trash as Trash2 } from "@phosphor-icons/react";
 import { useWebPerformance } from "@/hooks/use-web-performance";
 
 export function WebPerformanceMonitor() {

@@ -21,15 +21,10 @@ import {
   FileText as Template,
   MagnifyingGlass as Search, 
   Plus, 
-  Check,
   BookOpen,
   GraduationCap,
   Star,
-  TrendUp,
-  Globe,
-  Lightbulb,
   Eye,
-  EyeSlash,
   Download,
   Info
 } from "@phosphor-icons/react";
@@ -92,7 +87,7 @@ export function RuleTemplatesPanel() {
 
   // Get template statistics
   const getTemplateStats = (template: RuleTemplate) => {
-    const existingRules = template.rules.filter(rule => 
+    const existingRules = template.rules.filter((rule: any) => 
       ruleExists(rule.misspelling, rule.correction)
     );
     return {

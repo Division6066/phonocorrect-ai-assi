@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFID, onFCP, onLCP, onTTFB } from 'web-vitals';
 
 export interface WebVitalsMetric {
   name: string;

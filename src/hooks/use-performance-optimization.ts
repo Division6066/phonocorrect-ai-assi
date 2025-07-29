@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 export interface DeviceSpecs {
@@ -95,7 +95,7 @@ const detectDeviceSpecs = (): DeviceSpecs => {
     if (gl) {
       const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
       if (debugInfo) {
-        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_GL).toLowerCase();
+        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
         if (renderer.includes('apple')) return 'apple';
         if (renderer.includes('nvidia')) return 'nvidia';
         if (renderer.includes('amd') || renderer.includes('radeon')) return 'amd';
@@ -407,8 +407,8 @@ export function usePerformanceOptimization() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Mark as completed
-      setDownloadProgress(prev => prev ? { ...prev, status: 'completed', progress: 100 } : null);
-      setDownloadedModels(prev => [...prev, `${modelConfig.name}-${modelConfig.size}-${modelConfig.quantization}`]);
+      setDownloadProgress((prev: any) => prev ? { ...prev, status: 'completed', progress: 100 } : null);
+      setDownloadedModels((prev: string[]) => [...prev, `${modelConfig.name}-${modelConfig.size}-${modelConfig.quantization}`]);
       
       toast.success(`${modelConfig.name} model downloaded successfully`);
       
@@ -438,7 +438,7 @@ export function usePerformanceOptimization() {
 
   const deleteModel = useCallback(async (modelId: string) => {
     try {
-      setDownloadedModels(prev => prev.filter(id => id !== modelId));
+      setDownloadedModels((prev: string[]) => prev.filter((id: string) => id !== modelId));
       toast.success('Model deleted successfully');
     } catch (error) {
       toast.error('Failed to delete model');

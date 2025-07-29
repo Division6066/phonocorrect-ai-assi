@@ -68,11 +68,8 @@ export function RuleEditor({ rule, onSave, onCancel }: RuleEditorProps) {
         description: formData.description.trim() || undefined,
         examples: formData.examples
           .split('\n')
-          .map(ex => ex.trim())
-          .filter(ex => ex)
-          .split('\n')
-          .map(ex => ex.trim())
-          .filter(ex => ex)
+          .map((ex: string) => ex.trim())
+          .filter((ex: string) => ex.length > 0)
       };
 
       let savedRule: CustomRule;

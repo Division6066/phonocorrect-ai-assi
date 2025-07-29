@@ -1,15 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
 import { 
-  WhisperEngine, 
+  WhisperEngine as ImportedWhisperEngine, 
   WhisperConfig, 
   AudioBuffer, 
   getPlatformCapabilities 
 } from '@/lib/speech-engines';
-
-// Enhanced language support with Whisper.cpp model mapping from utils
-const getCurrentLanguage = () => 'en'; // Mock function - should be replaced with actual context
 
 export const WHISPER_LANGUAGES = [
   { code: 'en', label: 'English', flag: '🇺🇸', whisperModel: 'base.en' },
@@ -72,11 +68,15 @@ interface SpeechToTextOptions {
 // Mock Whisper.cpp integration - will be replaced with actual implementation
 class WhisperEngine {
   private isInitialized = false;
+  public audioContext: AudioContext | null = null;
 
   async initialize(_config: WhisperConfig): Promise<boolean> {
     try {
       // TODO: Replace with actual whisper.cpp WASM initialization
-      console.log('Initializing Whisper.cpp with config:', config);
+      console.log('Initializing Whisper.cpp with config:', _config);
+      
+      // Initialize audio context
+      this.audioContext = new AudioContext();
       
       // Simulate model loading
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -115,9 +115,10 @@ class WhisperEngine {
   }
 
   cleanup() {
-    if (this.audioContext) {
+    if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close();
     }
+    this.audioContext = null;
     this.isInitialized = false;
   }
 }

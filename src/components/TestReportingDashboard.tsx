@@ -13,6 +13,7 @@ import {
   TrendDown as TrendingDown, 
   Warning as AlertTriangle,
   ArrowClockwise as RefreshCw,
+  Browser as Chrome,
   Download,
   Globe,
   Monitor,

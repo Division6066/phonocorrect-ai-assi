@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useState, useEffect } from 'react';
 
 export interface User {
   id: string;
@@ -321,7 +321,7 @@ export function useCloudSync() {
     deviceCount: 1
   });
 
-  const [localData, setLocalData] = useKV('local-user-data', {
+  const [localData, setLocalData] = useState({
     preferences: [],
     documents: [],
     settings: {}
@@ -557,7 +557,7 @@ export function useCloudSync() {
   }, [syncState.user?.isPremium, syncState.user?.trialEnds, syncState.user?.planType]);
 
   const updateLocalData = useCallback((updates: Partial<typeof localData>) => {
-    setLocalData(prev => ({ ...prev, ...updates }));
+    setLocalData((prev: typeof localData) => ({ ...prev, ...updates }));
     
     // Auto-sync after local changes if premium
     if (syncState.user?.isPremium && syncState.connectionStatus === 'online') {

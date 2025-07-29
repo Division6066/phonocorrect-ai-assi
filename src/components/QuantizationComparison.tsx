@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Lightning, 
   Scales, 
@@ -17,7 +18,6 @@ import {
   Globe,
   Target
 } from "@phosphor-icons/react";
-import { useKV } from '@github/spark/hooks';
 import { toast } from 'sonner';
 
 interface ComparisonMetrics {
@@ -88,7 +88,7 @@ const TEST_SCENARIOS: TestScenario[] = [
 ];
 
 export const QuantizationComparison: React.FC = () => {
-  const [comparisonResults, setComparisonResults] = useKV<ComparisonMetrics[]>('quantization-comparison-results', []);
+  const [comparisonResults, setComparisonResults] = useState<ComparisonMetrics[]>([]);
   const [isRunningComparison, setIsRunningComparison] = useState(false);
   const [currentScenario, setCurrentScenario] = useState<string | null>(null);
   const [selectedScenarios, setSelectedScenarios] = useState<string[]>(['basic-phonetic', 'mixed-context']);
@@ -177,7 +177,7 @@ export const QuantizationComparison: React.FC = () => {
   const getAggregatedMetrics = () => {
     if (comparisonResults.length === 0) return null;
     
-    const grouped = comparisonResults.reduce((acc, result) => {
+    const grouped = comparisonResults.reduce((acc: Record<string, ComparisonMetrics[]>, result: ComparisonMetrics) => {
       if (!acc[result.quantization]) {
         acc[result.quantization] = [];
       }
@@ -187,12 +187,12 @@ export const QuantizationComparison: React.FC = () => {
     
     const aggregated = Object.entries(grouped).map(([quantization, results]) => ({
       quantization: quantization as '4bit' | '16bit',
-      avgInferenceTime: Math.round(results.reduce((sum, r) => sum + r.inferenceTime, 0) / results.length),
-      avgMemoryUsage: Math.round(results.reduce((sum, r) => sum + r.memoryUsage, 0) / results.length),
-      avgAccuracy: Math.round(results.reduce((sum, r) => sum + r.accuracy, 0) / results.length),
-      avgThroughput: Math.round(results.reduce((sum, r) => sum + r.throughput, 0) / results.length),
-      avgRealTimeScore: Math.round(results.reduce((sum, r) => sum + r.realTimeScore, 0) / results.length),
-      avgQualityScore: Math.round(results.reduce((sum, r) => sum + r.qualityScore, 0) / results.length),
+      avgInferenceTime: Math.round(results.reduce((sum: number, r: ComparisonMetrics) => sum + r.inferenceTime, 0) / results.length),
+      avgMemoryUsage: Math.round(results.reduce((sum: number, r: ComparisonMetrics) => sum + r.memoryUsage, 0) / results.length),
+      avgAccuracy: Math.round(results.reduce((sum: number, r: ComparisonMetrics) => sum + r.accuracy, 0) / results.length),
+      avgThroughput: Math.round(results.reduce((sum: number, r: ComparisonMetrics) => sum + r.throughput, 0) / results.length),
+      avgRealTimeScore: Math.round(results.reduce((sum: number, r: ComparisonMetrics) => sum + r.realTimeScore, 0) / results.length),
+      avgQualityScore: Math.round(results.reduce((sum: number, r: ComparisonMetrics) => sum + r.qualityScore, 0) / results.length),
       fileSize: results[0]?.fileSize || 0
     }));
     

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useKV } from '@github/spark/hooks';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface DeploymentTarget {
   id: string;

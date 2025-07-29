@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Rocket, Lightning, Globe, FileText, Shield, Key, Download, Copy, CheckCircle, AlertTriangle, GitBranch, Play, Calendar, Scales, TestTube, Bell } from "@phosphor-icons/react";
+import { Brain, Lightbulb, ArrowCounterClockwise, Cpu, Cloud, Lightning, Globe, FileText, Shield, Key, CheckCircle, GitBranch, Scales, TestTube, Bell } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { DebugOverlay } from "@/components/DebugOverlay";
 import { HardwareAccelerationPanel } from "@/components/HardwareAccelerationPanel";
@@ -55,7 +55,6 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<keyof typeof EXAMPLE_TEXTS>('en');
   const [activeTab, setActiveTab] = useState("writing");
-  const [setupStep, setSetupStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 

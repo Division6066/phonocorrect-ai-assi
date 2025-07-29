@@ -1,4 +1,3 @@
-import { useKV } from '@github/spark/hooks';
 import { useState, useCallback, useMemo } from 'react';
 import { CustomRule, RuleValidationResult, RulePreview, CustomRulesExport, RuleConflictResolution } from '@/types/custom-rules';
 import { generateId } from '@/utils/id-utils';
@@ -21,15 +20,15 @@ const DEFAULT_SETTINGS: RulesSettings = {
 };
 
 export function useCustomRules() {
-  const [customRules, setCustomRules] = useKV<CustomRule[]>(CUSTOM_RULES_KEY, []);
-  const [settings, setSettings] = useKV<RulesSettings>(RULES_SETTINGS_KEY, DEFAULT_SETTINGS);
+  const [customRules, setCustomRules] = useState<CustomRule[]>([]);
+  const [settings, setSettings] = useState<RulesSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(false);
 
   // Get enabled rules sorted by priority (most used first)
   const enabledRules = useMemo(() => {
     return customRules
-      .filter(rule => rule.enabled)
-      .sort((a, b) => {
+      .filter((rule: CustomRule) => rule.enabled)
+      .sort((a: CustomRule, b: CustomRule) => {
         // Sort by usage frequency
         const aScore = a.usage.timesApplied - (a.usage.timesRejected * 0.5);
         const bScore = b.usage.timesApplied - (b.usage.timesRejected * 0.5);
@@ -67,7 +66,7 @@ export function useCustomRules() {
     }
 
     // Check for duplicate patterns
-    const existing = customRules.find(r => 
+    const existing = customRules.find((r: CustomRule) => 
       r.id !== rule.id && 
       r.misspelling.toLowerCase() === rule.misspelling?.toLowerCase() &&
       r.isRegex === rule.isRegex
@@ -149,7 +148,7 @@ export function useCustomRules() {
       }
     };
 
-    setCustomRules(current => [...current, newRule]);
+    setCustomRules((current: CustomRule[]) => [...current, newRule]);
     toast.success(`Rule created: "${newRule.misspelling}" → "${newRule.correction}"`);
     
     return newRule;
@@ -157,7 +156,7 @@ export function useCustomRules() {
 
   // Update existing rule
   const updateRule = useCallback(async (id: string, updates: Partial<CustomRule>) => {
-    const existing = customRules.find(r => r.id === id);
+    const existing = customRules.find((r: CustomRule) => r.id === id);
     if (!existing) {
       throw new Error('Rule not found');
     }
@@ -169,8 +168,8 @@ export function useCustomRules() {
       throw new Error(validation.error);
     }
 
-    setCustomRules(current => 
-      current.map(rule => rule.id === id ? updatedRule : rule)
+    setCustomRules((current: CustomRule[]) => 
+      current.map((rule: CustomRule) => rule.id === id ? updatedRule : rule)
     );
 
     toast.success('Rule updated successfully');
@@ -179,25 +178,25 @@ export function useCustomRules() {
 
   // Delete rule
   const deleteRule = useCallback(async (id: string) => {
-    const existing = customRules.find(r => r.id === id);
+    const existing = customRules.find((r: CustomRule) => r.id === id);
     if (!existing) {
       throw new Error('Rule not found');
     }
 
-    setCustomRules(current => current.filter(rule => rule.id !== id));
+    setCustomRules((current: CustomRule[]) => current.filter((rule: CustomRule) => rule.id !== id));
     toast.success(`Rule deleted: "${existing.misspelling}"`);
   }, [customRules, setCustomRules]);
 
   // Toggle rule enabled/disabled
   const toggleRule = useCallback(async (id: string) => {
     await updateRule(id, { 
-      enabled: !customRules.find(r => r.id === id)?.enabled 
+      enabled: !customRules.find((r: CustomRule) => r.id === id)?.enabled 
     });
   }, [customRules, updateRule]);
 
   // Record rule usage
   const recordRuleUsage = useCallback(async (id: string, accepted: boolean) => {
-    const rule = customRules.find(r => r.id === id);
+    const rule = customRules.find((r: CustomRule) => r.id === id);
     if (!rule) return;
 
     const updates: Partial<CustomRule> = {
@@ -209,8 +208,8 @@ export function useCustomRules() {
       }
     };
 
-    setCustomRules(current =>
-      current.map(r => r.id === id ? { ...r, ...updates } : r)
+    setCustomRules((current: CustomRule[]) =>
+      current.map((r: CustomRule) => r.id === id ? { ...r, ...updates } : r)
     );
   }, [customRules, setCustomRules]);
 
@@ -246,7 +245,7 @@ export function useCustomRules() {
   // Export rules
   const exportRules = useCallback((selectedRuleIds?: string[]): CustomRulesExport => {
     const rulesToExport = selectedRuleIds 
-      ? customRules.filter(rule => selectedRuleIds.includes(rule.id))
+      ? customRules.filter((rule: CustomRule) => selectedRuleIds.includes(rule.id))
       : customRules;
 
     return {
@@ -255,7 +254,7 @@ export function useCustomRules() {
       rules: rulesToExport,
       metadata: {
         totalRules: rulesToExport.length,
-        enabledRules: rulesToExport.filter(r => r.enabled).length,
+        enabledRules: rulesToExport.filter((r: CustomRule) => r.enabled).length,
         platform: typeof window !== 'undefined' ? (
           window.navigator.userAgent.includes('electron') ? 'desktop' : 'web'
         ) : 'unknown'
@@ -277,7 +276,7 @@ export function useCustomRules() {
       for (const rule of exportData.rules) {
         try {
           // Check for duplicates
-          const existing = customRules.find(r => 
+          const existing = customRules.find((r: CustomRule) => 
             r.misspelling === rule.misspelling && r.isRegex === rule.isRegex
           );
 
@@ -359,7 +358,7 @@ export function useCustomRules() {
       total: customRules.length,
       enabled: enabledRules.length,
       disabled: customRules.length - enabledRules.length,
-      totalUsage: customRules.reduce((sum, rule) => sum + rule.usage.timesApplied, 0)
+      totalUsage: customRules.reduce((sum: number, rule: CustomRule) => sum + rule.usage.timesApplied, 0)
     }
   };
 }
